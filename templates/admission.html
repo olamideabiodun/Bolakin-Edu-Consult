@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolakin Educational Consult</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+</head>
+<body>
+    <!-- Preloader -->
+    <div class="preloader">
+        <div class="loader">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+        </div>
+    </div>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/bolakin-logo.png') }}" alt="Bolakin Educational Consult">
+            </div>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#" class="animate__animated animate__fadeIn">Home</a></li>
+                    <li><a href="#" class="animate__animated animate__fadeIn">Blog</a></li>
+                    <li><a href="#" class="animate__animated animate__fadeIn">Gallery & Review</a></li>
+                    <li><a href="#" class="animate__animated animate__fadeIn">About</a></li>
+                    <li><a href="#" class="book-btn animate__animated animate__fadeIn">Book Appointment</a></li>
+                </ul>
+            </nav>
+            <!-- Mobile menu toggle will be added by JavaScript -->
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1 class="animate__animated animate__fadeInDown">Admissions with Bolakin Educational Consult:</h1>
+                <h2 class="animate__animated animate__fadeInUp">Your Gateway to Global Education!</h2>
+                <p class="animate__animated animate__fadeIn">In today's fast-evolving world, securing international education is a game-changer for career advancement and personal growth. At Bolakin Educational Consult, we specialize in providing seamless study abroad services, ensuring that students and professionals achieve their dreams of international education with ease.</p>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <div class="feature-box" data-aos="fade-right">
+                    <h3>Why Choose Bolakin Educational Consult?</h3>
+                    <p>With years of experience and a reputation for excellence, Bolakin Edu-Consult stands out as a trusted travel and study abroad agency. Our motto, "We Deliver, As Promised", is not just a slogan—it's a commitment. We guide you every step of the way, from choosing the right university to securing your visa, making your dream a reality.</p>
+                </div>
+                
+                <div class="feature-box" data-aos="fade-left">
+                    <h3>Our Destinations</h3>
+                    <p>We offer admission processing to prestigious institutions across a variety of top-tier educational destinations, including:</p>
+                    <ul class="destinations">
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/france.png') }}" alt="France Flag">
+                            <span>France</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/ireland.png') }}" alt="Ireland Flag">
+                            <span>Ireland</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/canada.png') }}" alt="Canada Flag">
+                            <span>Canada</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/poland.png') }}" alt="Poland Flag">
+                            <span>Poland</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/usa.png') }}" alt="USA Flag">
+                            <span>United States</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/turkey.png') }}" alt="Turkey Flag">
+                            <span>Turkey</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/switzerland.png') }}" alt="Switzerland Flag">
+                            <span>Switzerland</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/uk.png') }}" alt="United Kingdom Flag">
+                            <span>United Kingdom</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/georgia.png') }}" alt="Georgia Flag">
+                            <span>Georgia</span>
+                        </li>
+                        <li>
+                            <img src="{{ url_for('static', filename='images/flags/australia.png') }}" alt="Australia Flag">
+                            <span>Australia</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <div class="cta-wrapper" data-aos="zoom-in">
+            <a href="#" class="cta-button">Get Started Today!</a>
+        </div>
+
+        <section class="why-study" data-aos="fade-up">
+            <div class="container">
+                <h2>Why Study Abroad?</h2>
+                <p>Studying abroad offers numerous benefits, including:</p>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card" data-aos="fade-up" data-aos-delay="100">
+                        <div class="benefit-image">
+                            <img src="{{ url_for('static', filename='images/education.jpg') }}" alt="Students in classroom">
+                        </div>
+                        <h3>Exposure to world-class education</h3>
+                        <p>Studying abroad gives students access to top-ranked universities, cutting-edge research, and advanced learning facilities. This experience enhances their academic knowledge while exposing them to diverse teaching methods and global perspectives.</p>
+                    </div>
+                    
+                    <div class="benefit-card" data-aos="fade-up" data-aos-delay="200">
+                        <div class="benefit-image">
+                            <img src="{{ url_for('static', filename='images/career.jpg') }}" alt="Light bulb - ideas">
+                        </div>
+                        <h3>Enhanced Career Opportunities</h3>
+                        <p>A degree from an international institution makes graduates more competitive in the job market. Employers value global experience, adaptability, and the ability to work in diverse environments, increasing career prospects.</p>
+                    </div>
+                    
+                    <div class="benefit-card" data-aos="fade-up" data-aos-delay="300">
+                        <div class="benefit-image">
+                            <img src="{{ url_for('static', filename='images/cultural.jpg') }}" alt="Cultural performance">
+                        </div>
+                        <h3>Cultural Exchange and Networking</h3>
+                        <p>Living in a new country fosters cultural awareness, adaptability, and communication skills. It also helps students build a strong global network of peers, mentors, and industry professionals, opening doors to future collaborations.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="services" data-aos="fade-up">
+            <div class="container">
+                <h2>OUR ADMISSION SERVICES</h2>
+                <p>We provide comprehensive admission services tailored to your specific needs. Our services include:</p>
+                
+                <div class="services-grid">
+                    <div class="service-card" data-aos="flip-left">
+                        <h3>University and Course Selection:</h3>
+                        <p>We help you find the perfect match based on your academic background, career goals, and financial capacity.</p>
+                    </div>
+                    
+                    <div class="service-card" data-aos="flip-left" data-aos-delay="100">
+                        <h3>Application Processing:</h3>
+                        <p>Our team ensures your application stands out with professional guidance and document review.</p>
+                    </div>
+                    
+                    <div class="service-card" data-aos="flip-left" data-aos-delay="200">
+                        <h3>Scholarship Assistance:</h3>
+                        <p>We explore scholarship opportunities to help ease financial burdens for qualified students.</p>
+                    </div>
+                    
+                    <div class="service-card" data-aos="flip-left" data-aos-delay="300">
+                        <h3>Visa Processing & Guidance:</h3>
+                        <p>Our experts simplify the visa process, increasing your chances of approval.</p>
+                    </div>
+                    
+                    <div class="service-card" data-aos="flip-left" data-aos-delay="400">
+                        <h3>Room service/Accommodation & Travel Support:</h3>
+                        <p>We assist in securing suitable housing and travel arrangements for a smooth transition abroad.</p>
+                    </div>
+                    
+                    <div class="service-card" data-aos="flip-left" data-aos-delay="500">
+                        <h3>Pre-Departure Counseling:</h3>
+                        <p>Get essential tips and insights to prepare you for life in your new country.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="trusted-agent" data-aos="fade-up">
+            <div class="container">
+                <div class="agent-content">
+                    <h2>Get It Right With A Trusted Travel Angency!</h2>
+                    <p>At <strong>Bolakin Edu-Consult</strong>, we take pride in providing top-notch guidance for your study abroad journey. With us, you can never go wrong!</p>
+                    <a href="#" class="contact-btn">Contact Us Today!</a>
+                </div>
+                
+                <div class="agent-card" data-aos="zoom-in">
+                    <div class="card-header">
+                        <h3>Bolakin <span>Edu-Consult</span></h3>
+                        <p>Get it right with a Trusted travel agent!</p>
+                    </div>
+                    <p class="card-subtitle">Below are the Countries we process to</p>
+                    <div class="countries-grid">
+                        <div class="country-btn orange">FRANCE</div>
+                        <div class="country-btn white">IRELAND</div>
+                        <div class="country-btn white">CANADA</div>
+                        <div class="country-btn orange">POLAND</div>
+                        <div class="country-btn orange">UNITED STATES</div>
+                        <div class="country-btn white">CYPRUS</div>
+                        <div class="country-btn white">MALTA</div>
+                        <div class="country-btn orange">NETHERLANDS</div>
+                        <div class="country-btn orange">DUBAI</div>
+                        <div class="country-btn white">TURKEY</div>
+                        <div class="country-btn white">SWITZERLAND</div>
+                        <div class="country-btn orange">UNITED KINGDOM</div>
+                    </div>
+                    <img src="{{ url_for('static', filename='images/consultant.png') }}" alt="Education Consultant" class="consultant-image">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-logo">
+                <img src="{{ url_for('static', filename='images/bolakin-logo.png') }}" alt="Bolakin Edu Consult">
+            </div>
+            <div class="copyright">
+                BOLAKINEDDUCONSULT © 2022
+            </div>
+            <div class="social-links">
+                <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <div class="scroll-to-top">
+        <a href="#"><i class="fas fa-chevron-up"></i></a>
+    </div>
+
+    <div class="whatsapp-button">
+        <a href="https://wa.me/yournumber" target="_blank">
+            <img src="{{ url_for('static', filename='images/whatsapp-icon.png') }}" alt="WhatsApp">
+        </a>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
