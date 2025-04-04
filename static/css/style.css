@@ -644,6 +644,7 @@ nav ul li a:hover::after {
 .card-header p {
     opacity: 0.9;
     letter-spacing: 0.02em;
+    color: antiquewhite;
 }
 
 .card-subtitle {
@@ -651,6 +652,7 @@ nav ul li a:hover::after {
     margin-bottom: 25px;
     background-color: rgba(255, 255, 255, 0.1);
     padding: 10px;
+    color: antiquewhite;
     border-radius: 30px;
     font-size: 16px;
     letter-spacing: 0.02em;
