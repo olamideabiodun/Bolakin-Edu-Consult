@@ -1,0 +1,16 @@
+<!-- Newsletter subscription section -->
+<section class="newsletter-section">
+    <div class="newsletter-container">
+        <div class="newsletter-text">
+            <h2>Let's stay in touch!</h2>
+            <p>Subscribe to our newsletter and be the first to get our most recent news, offers and promos directly to your inbox. See ya!</p>
+        </div>
+        <div class="newsletter-form">
+            <div class="unsubscribe-text">You can unsubscribe anytime you wish!</div>
+            <form id="subscribeForm" method="POST" action="{{ url_for('subscribe') }}">
+                <input type="email" class="newsletter-input" name="email" placeholder="Enter your email" required>
+                <button type="submit" class="newsletter-btn">Subscribe</button>
+            </form>
+        </div>
+    </div>
+</section>

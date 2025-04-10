@@ -1,0 +1,200 @@
+<!-- Admission Form Modal -->
+<div id="admissionFormModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        
+        <div class="form-header">
+            <h2>Admission Intake Form</h2>
+            <p>Apply now to begin your academic journey.</p>
+        </div>
+        
+        <form id="admissionForm" method="POST">
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <h3>Personal Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fullName">Full Name <span class="required">*</span></label>
+                        <input type="text" id="fullName" name="fullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dob">Date of Birth <span class="required">*</span></label>
+                        <input type="date" id="dob" name="dob" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gender">Gender <span class="required">*</span></label>
+                        <select id="gender" name="gender" required>
+                            <option value="" disabled selected>Select gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Contact Number <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="email">Email Address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Academic Background Section -->
+            <div class="form-section">
+                <h3>Academic Background</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="prevInstitution">Previous Institution <span class="required">*</span></label>
+                        <input type="text" id="prevInstitution" name="prevInstitution" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="qualification">Qualification <span class="required">*</span></label>
+                        <input type="text" id="qualification" name="qualification" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gradYear">Year of Graduation <span class="required">*</span></label>
+                        <input type="number" id="gradYear" name="gradYear" min="1900" max="2099" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gpa">GPA or Grade <span class="required">*</span></label>
+                        <input type="text" id="gpa" name="gpa" required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Program Selection Section -->
+            <div class="form-section">
+                <h3>Program Selection</h3>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="course">Preferred Course or Program <span class="required">*</span></label>
+                        <select id="course" name="course" required>
+                            <option value="" disabled selected>Select your preferred program</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Business Administration">Business Administration</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Medicine">Medicine</option>
+                            <option value="Law">Law</option>
+                            <option value="Arts and Humanities">Arts and Humanities</option>
+                            <option value="Social Sciences">Social Sciences</option>
+                            <option value="Natural Sciences">Natural Sciences</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studyMode">Study Mode <span class="required">*</span></label>
+                        <select id="studyMode" name="studyMode" required>
+                            <option value="" disabled selected>Select study mode</option>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Distance Learning">Distance Learning</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="campus">Campus</label>
+                        <select id="campus" name="campus">
+                            <option value="" disabled selected>Select campus</option>
+                            <option value="Main Campus">Main Campus</option>
+                            <option value="City Campus">City Campus</option>
+                            <option value="International Campus">International Campus</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Document Upload Section -->
+            <div class="form-section">
+                <h3>Document Upload</h3>
+                <div class="form-row">
+                    <div class="form-group upload-group">
+                        <label for="idUpload">Upload ID <span class="required">*</span></label>
+                        <div class="upload-container">
+                            <input type="file" id="idUpload" name="idUpload" required>
+                            <label for="idUpload" class="upload-label">
+                                <span class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </span>
+                                <span class="upload-text">Choose file</span>
+                            </label>
+                            <div class="file-info" id="idUploadInfo">No file chosen</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group upload-group">
+                        <label for="transcriptUpload">Upload Transcript <span class="required">*</span></label>
+                        <div class="upload-container">
+                            <input type="file" id="transcriptUpload" name="transcriptUpload" required>
+                            <label for="transcriptUpload" class="upload-label">
+                                <span class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </span>
+                                <span class="upload-text">Choose file</span>
+                            </label>
+                            <div class="file-info" id="transcriptUploadInfo">No file chosen</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group upload-group">
+                        <label for="photoUpload">Upload Passport Photo <span class="required">*</span></label>
+                        <div class="upload-container">
+                            <input type="file" id="photoUpload" name="photoUpload" required>
+                            <label for="photoUpload" class="upload-label">
+                                <span class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </span>
+                                <span class="upload-text">Choose file</span>
+                            </label>
+                            <div class="file-info" id="photoUploadInfo">No file chosen</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Declaration Section -->
+            <div class="form-section">
+                <h3>Declaration</h3>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="agreement" name="agreement" required>
+                            <label for="agreement">
+                                I hereby declare that the information provided is true and correct. I also understand that any willful dishonesty may result in rejection of this application.
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="signature">Digital Signature (Type Your Full Name) <span class="required">*</span></label>
+                        <input type="text" id="signature" name="signature" required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="form-footer">
+                <button type="submit" id="submitApplication" class="submit-btn">Submit Application</button>
+                <p class="form-note">We will contact you via email after reviewing your application.</p>
+            </div>
+        </form>
+    </div>
+</div>

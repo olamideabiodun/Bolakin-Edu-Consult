@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %} | Bolakin Educational Consult</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+    <!-- Custom Admin CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="bg-dark">
+            <div class="sidebar-header">
+                <h3>Bolakin Admin</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                    <a href="{{ url_for('admin.dashboard') }}">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </li>
+                <li class="{% if 'subscribers' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.subscribers') }}">
+                        <i class="fas fa-envelope"></i> Subscribers
+                    </a>
+                </li>
+                <li class="{% if 'applications' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.applications') }}">
+                        <i class="fas fa-graduation-cap"></i> Applications
+                    </a>
+                </li>
+                <li class="{% if 'newsletters' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.newsletters') }}">
+                        <i class="fas fa-newspaper"></i> Newsletters
+                    </a>
+                </li>
+                <li class="{% if 'analytics' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.analytics') }}">
+                        <i class="fas fa-chart-line"></i> Analytics
+                    </a>
+                </li>
+                <li class="{% if 'users' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.users') }}">
+                        <i class="fas fa-users"></i> Users
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('auth.change_password') }}">
+                        <i class="fas fa-key"></i> Change Password
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('auth.logout') }}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <p>Logged in as: {{ current_user.username }}</p>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-dark">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <span class="navbar-text">
+                        {% block header_title %}Admin Dashboard{% endblock %}
+                    </span>
+                    <div>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> View Site
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Flash Messages -->
+            <div class="container mt-3">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Main Content -->
+            <main class="container-fluid py-4">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom Admin JS -->
+    <script>
+        $(document).ready(function() {
+            // Toggle sidebar
+            $('#sidebarCollapse').on('click', function() {
+                $('#sidebar').toggleClass('active');
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

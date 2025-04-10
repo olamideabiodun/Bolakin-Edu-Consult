@@ -1,42 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolakin Educational Consult</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
-</head>
-<body>
-    <!-- Preloader -->
-    <div class="preloader">
-        <div class="loader">
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-        </div>
-    </div>
-    <header>
-        <div class="container">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='images/bolakin_logo.png') }}" alt="Bolakin Educational Consult">
-            </div>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="#" class="animate__animated animate__fadeIn">Home</a></li>
-                    <li><a href="#" class="animate__animated animate__fadeIn">Blog</a></li>
-                    <li><a href="#" class="animate__animated animate__fadeIn">Gallery & Review</a></li>
-                    <li><a href="#" class="animate__animated animate__fadeIn">About</a></li>
-                    <li><a href="#" class="book-btn animate__animated animate__fadeIn">Book Appointment</a></li>
-                </ul>
-            </nav>
-            <!-- Mobile menu toggle will be added by JavaScript -->
-        </div>
-    </header>
+{% extends "base.html" %}
 
+{% block content %}
     <main>
         <section class="hero">
             <div class="container">
@@ -114,7 +78,7 @@
                             <span>MALTA</span>
                         </li>
                         <li>
-                            <img src="{{ url_for('static', filename='images/flags/UAE.png') }}" alt="UAE Flag">
+                            <img src="{{ url_for('static', filename='images/flags/uae.png') }}" alt="UAE Flag">
                             <span>UAE</span>
                         </li>
                         <li>
@@ -127,7 +91,7 @@
         </section>
 
         <div class="cta-wrapper" data-aos="zoom-in">
-            <a href="#" class="cta-button">Get Started Today!</a>
+            <a href="#" id="openAdmissionForm" class="cta-button">Get Started Today!</a>
         </div>
 
         <section class="why-study" data-aos="fade-up">
@@ -207,7 +171,7 @@
                 <div class="agent-content">
                     <h2>Get It Right With A Trusted Travel Angency!</h2>
                     <p>At <strong>Bolakin Edu-Consult</strong>, we take pride in providing top-notch guidance for your study abroad journey. With us, you can never go wrong!</p>
-                    <a href="#" class="contact-btn">Contact Us Today!</a>
+                    <a href="https://api.whatsapp.com/send?phone=%2B23490135094649" class="contact-btn">Contact Us Today!</a>
                 </div>
                 
                 <div class="agent-card" data-aos="zoom-in">
@@ -234,36 +198,88 @@
             </div>
         </section>
     </main>
+    {% include 'admission_form.html' %}
+    {% include 'components/newsletter.html' %}
+</main>
 
-    <footer>
-        <div class="container">
-            <div class="footer-logo">
-                <img src="{{ url_for('static', filename='images/bolakin_logo.png') }}" alt="Bolakin Edu Consult">
-            </div>
-            <div class="copyright">
-                BOLAKINEDDUCONSULT © 2022
-            </div>
-            <div class="social-links">
-                <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-                <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
-                <a href="#" class="social-icon"><i class="fab fa-whatsapp"></i></a>
-            </div>
-        </div>
-    </footer>
-
-    <div class="scroll-to-top">
-        <a href="#"><i class="fas fa-chevron-up"></i></a>
+{% if subscription_status == 'success' %}
+<div class="subscription-success-message">
+    <div class="message-content">
+        <i class="fas fa-check-circle"></i>
+        <p>Thank you for subscribing to our newsletter!</p>
+        <button class="close-message"><i class="fas fa-times"></i></button>
     </div>
+</div>
 
-    <div class="whatsapp-button">
-        <a href="https://wa.me/yournumber" target="_blank">
-            <img src="{{ url_for('static', filename='images/whatsapp-icon.png') }}" alt="WhatsApp">
-        </a>
-    </div>
+<style>
+    /* Temporary inline styles for the success message */
+    .subscription-success-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        animation: slideIn 0.5s ease forwards;
+    }
+    .message-content {
+        display: flex;
+        align-items: center;
+    }
+    .message-content i.fa-check-circle {
+        font-size: 24px;
+        margin-right: 10px;
+    }
+    .close-message {
+        background: none;
+        border: none;
+        color: white;
+        margin-left: 15px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    /* Add this JavaScript to automatically close the message after 5 seconds */
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const successMessage = document.querySelector('.subscription-success-message');
+            if (successMessage) {
+                // Auto close after 5 seconds
+                setTimeout(() => {
+                    successMessage.style.animation = 'slideOut 0.5s ease forwards';
+                    setTimeout(() => {
+                        successMessage.remove();
+                    }, 500);
+                }, 5000);
+                
+                // Close on button click
+                const closeBtn = successMessage.querySelector('.close-message');
+                closeBtn.addEventListener('click', function() {
+                    successMessage.style.animation = 'slideOut 0.5s ease forwards';
+                    setTimeout(() => {
+                        successMessage.remove();
+                    }, 500);
+                });
+            }
+        });
+    </script>
+    
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+</style>
+{% endif %}
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='js/admission_form.js') }}"></script>
+{% endblock %}

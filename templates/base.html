@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolakin Educational Consult</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admission_form.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/subscribe.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/subscribe.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notification.css') }}">
+    <script src="{{ url_for('static', filename='js/subscription.js') }}"></script>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Preloader -->
+    <div class="preloader">
+        <div class="loader">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+        </div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/bolakin_logo.png') }}" alt="Bolakin Educational Consult">
+            </div>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('home') }}" class="animate__animated animate__fadeIn">Home</a></li>
+                    <li><a href="{{ url_for('blog') }}" class="animate__animated animate__fadeIn">Blog</a></li>
+                    <li><a href="{{ url_for('gallery') }}" class="animate__animated animate__fadeIn">Gallery & Review</a></li>
+                    <li><a href="{{ url_for('about') }}" class="animate__animated animate__fadeIn">About</a></li>
+                    <li><a href="{{ url_for('appointment') }}" class="book-btn animate__animated animate__fadeIn">Book Appointment</a></li>
+                </ul>
+            </nav>
+            <!-- Mobile menu toggle will be added by JavaScript -->
+        </div>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    <footer>
+        <div class="container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/bolakin_logo.png') }}" alt="Bolakin Educational Consult">
+            </div>
+            <div class="copyright">
+                BOLAKINEDDUCONSULT © 2022
+            </div>
+            <div class="social-links">
+                <a href="https://www.facebook.com/bolakineduconsult/" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.instagram.com/bolakineduconsult_/?hl=en" class="social-icon"><i class="fab fa-instagram"></i></a>
+                <a href="https://youtube.com/channel/UCNXpRU4wCiUjNqqpHWla_Gg" class="social-icon"><i class="fab fa-youtube"></i></a>
+                <a href="https://x.com/BolakinEdu?t=asR2cZDpE66mX50Th8HF5w&s=09" class="social-icon"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+    </footer>
+
+
+    <div class="scroll-to-top">
+        <a href="#"><i class="fas fa-chevron-up"></i></a>
+    </div>
+
+    <div class="whatsapp-button">
+        <a href="https://wa.me/yournumber" target="_blank">
+            <img src="{{ url_for('static', filename='images/whatsapp-icon.png') }}" alt="WhatsApp">
+        </a>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

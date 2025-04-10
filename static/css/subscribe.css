@@ -1,0 +1,139 @@
+/* ===== NEWSLETTER SUBSCRIPTION STYLES ===== */
+.newsletter-section {
+    padding: 60px 0;
+    background-color: #000;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    /* Dark background with subtle gradient */
+    background: linear-gradient(to bottom, #000000, #111111);
+}
+
+/* Orange line above section */
+.newsletter-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #FF9933, transparent);
+}
+
+.newsletter-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.newsletter-text {
+    flex: 1;
+    min-width: 300px;
+    padding-right: 20px;
+}
+
+.newsletter-text h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #FF9933;
+    font-weight: 600;
+}
+
+.newsletter-text p {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+}
+
+.newsletter-form {
+    flex: 1;
+    min-width: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+}
+
+.unsubscribe-text {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.newsletter-input {
+    width: 100%;
+    max-width: 400px;
+    height: 50px;
+    padding: 0 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px 0 0 50px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.newsletter-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.newsletter-input:focus {
+    border-color: #FF9933;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.newsletter-btn {
+    height: 50px;
+    padding: 0 25px;
+    border: none;
+    border-radius: 0 50px 50px 0;
+    background: linear-gradient(45deg, #FF8C00, #FF9933);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.newsletter-btn:hover {
+    background: linear-gradient(45deg, #FF9933, #FF8C00);
+    box-shadow: 0 0 15px rgba(255, 153, 51, 0.4);
+}
+
+/* Scroll to top button position adjustment */
+.scroll-to-top {
+    z-index: 101; /* Ensure it's above newsletter section */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .newsletter-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 30px;
+    }
+    
+    .newsletter-text {
+        padding-right: 0;
+    }
+    
+    .newsletter-form {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .unsubscribe-text {
+        position: relative;
+        top: -15px;
+        right: auto;
+        text-align: center;
+    }
+}

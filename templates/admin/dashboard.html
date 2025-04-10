@@ -1,0 +1,250 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block header_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Subscribers</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_subscribers }}</div>
+                        <div class="small text-success">
+                            {{ active_subscribers }} active
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-envelope fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <a href="{{ url_for('admin.subscribers') }}" class="small text-primary">View details</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Total Applications</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_applications }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-graduation-cap fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <a href="{{ url_for('admin.applications') }}" class="small text-success">View details</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Newsletters</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_newsletters }}</div>
+                        <div class="small text-info">
+                            {{ sent_newsletters }} sent
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-newspaper fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <a href="{{ url_for('admin.newsletters') }}" class="small text-info">View details</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Quick Actions</div>
+                        <div class="mt-2">
+                            <a href="{{ url_for('admin.create_newsletter') }}" class="btn btn-sm btn-outline-primary mb-2">
+                                <i class="fas fa-plus"></i> New Newsletter
+                            </a>
+                            <a href="{{ url_for('admin.analytics') }}" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-line"></i> View Analytics
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <span class="small text-muted">Manage your site</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Traffic Chart -->
+<div class="row mt-4">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Website Traffic (Last 30 Days)</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Top Pages</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Page</th>
+                                <th>Views</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for page in top_pages %}
+                            <tr>
+                                <td>{{ page.page }}</td>
+                                <td>{{ page.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Applications -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Applications</h6>
+                <a href="{{ url_for('admin.applications') }}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Program</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for application in recent_applications %}
+                            <tr>
+                                <td>{{ application.full_name }}</td>
+                                <td>{{ application.email }}</td>
+                                <td>{{ application.course }}</td>
+                                <td>
+                                    {% if application.status == 'Pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif application.status == 'Reviewing' %}
+                                    <span class="badge bg-info">Reviewing</span>
+                                    {% elif application.status == 'Accepted' %}
+                                    <span class="badge bg-success">Accepted</span>
+                                    {% elif application.status == 'Rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ application.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <a href="{{ url_for('admin.application_details', id=application.id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">No recent applications</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Traffic Chart
+    var ctx = document.getElementById('trafficChart').getContext('2d');
+    var trafficChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ visit_dates|safe }},
+            datasets: [{
+                label: 'Site Visits',
+                data: {{ visit_counts|safe }},
+                backgroundColor: 'rgba(255, 153, 51, 0.2)',
+                borderColor: 'rgba(255, 153, 51, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(255, 153, 51, 1)',
+                pointBorderColor: '#fff',
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'rgba(255, 153, 51, 1)',
+                pointHoverBorderColor: '#fff',
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

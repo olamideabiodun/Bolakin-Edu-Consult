@@ -1,0 +1,144 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Applications{% endblock %}
+
+{% block header_title %}Admission Applications{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Applications 
+            <span class="badge bg-primary rounded-pill">{{ pagination.total }}</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        <!-- Filters -->
+        <div class="mb-4">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('admin.applications', status='all') }}" 
+                   class="btn {% if status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    All
+                </a>
+                <a href="{{ url_for('admin.applications', status='Pending') }}" 
+                   class="btn {% if status == 'Pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                    Pending
+                </a>
+                <a href="{{ url_for('admin.applications', status='Reviewing') }}" 
+                   class="btn {% if status == 'Reviewing' %}btn-info{% else %}btn-outline-info{% endif %}">
+                    Reviewing
+                </a>
+                <a href="{{ url_for('admin.applications', status='Accepted') }}" 
+                   class="btn {% if status == 'Accepted' %}btn-success{% else %}btn-outline-success{% endif %}">
+                    Accepted
+                </a>
+                <a href="{{ url_for('admin.applications', status='Rejected') }}" 
+                   class="btn {% if status == 'Rejected' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                    Rejected
+                </a>
+            </div>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Program</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in applications %}
+                    <tr>
+                        <td>{{ application.full_name }}</td>
+                        <td>{{ application.email }}</td>
+                        <td>{{ application.phone }}</td>
+                        <td>{{ application.course }}</td>
+                        <td>
+                            {% if application.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif application.status == 'Reviewing' %}
+                            <span class="badge bg-info">Reviewing</span>
+                            {% elif application.status == 'Accepted' %}
+                            <span class="badge bg-success">Accepted</span>
+                            {% elif application.status == 'Rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ application.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.application_details', id=application.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">No applications found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Applications pagination">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.applications', status=status, page=pagination.prev_num) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page in pagination.iter_pages() %}
+                    {% if page %}
+                        {% if page == pagination.page %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ page }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.applications', status=status, page=page) }}">{{ page }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">...</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.applications', status=status, page=pagination.next_num) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

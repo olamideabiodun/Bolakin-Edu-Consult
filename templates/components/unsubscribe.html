@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+    <section class="unsubscribe-section">
+        <div class="container">
+            <div class="unsubscribe-box">
+                <h2>Newsletter Unsubscribe</h2>
+                
+                {% if message %}
+                    <div class="message-box">
+                        {% if email %}
+                            <p>The email <strong>{{ email }}</strong> has been successfully unsubscribed from our newsletter.</p>
+                            <p>We're sorry to see you go! If you ever want to re-subscribe, you can do so from our website.</p>
+                        {% else %}
+                            <p>{{ message }}</p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <form id="unsubscribeForm" method="GET" action="{{ url_for('unsubscribe') }}">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <button type="submit" class="unsubscribe-btn">Unsubscribe</button>
+                    </form>
+                {% endif %}
+                
+                <div class="back-link">
+                    <a href="{{ url_for('home') }}">← Back to Homepage</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .unsubscribe-section {
+        padding: 100px 0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #f9f9f9 100%);
+    }
+    
+    .unsubscribe-box {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 15px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        text-align: center;
+    }
+    
+    .unsubscribe-box h2 {
+        color: #FF9933;
+        margin-bottom:
+        30px;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .unsubscribe-box h2::after {
+        content: '';
+        position: absolute;
+        width: 60px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .message-box {
+        background-color: rgba(255, 153, 51, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+    
+    .unsubscribe-btn {
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .unsubscribe-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(255, 153, 51, 0.3);
+    }
+    
+    .back-link {
+        margin-top: 30px;
+    }
+    
+    .back-link a {
+        color: #555;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .back-link a:hover {
+        color: #FF9933;
+    }
+</style>
+{% endblock %}

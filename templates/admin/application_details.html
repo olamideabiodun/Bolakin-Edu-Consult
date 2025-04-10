@@ -1,0 +1,189 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Application Details{% endblock %}
+
+{% block header_title %}Application Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Application Details Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Application #{{ application.id }}</h6>
+                <div>
+                    <span class="me-2">Status:</span>
+                    {% if application.status == 'Pending' %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif application.status == 'Reviewing' %}
+                    <span class="badge bg-info">Reviewing</span>
+                    {% elif application.status == 'Accepted' %}
+                    <span class="badge bg-success">Accepted</span>
+                    {% elif application.status == 'Rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Personal Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Full Name:</strong> {{ application.full_name }}</p>
+                            <p><strong>Email:</strong> {{ application.email }}</p>
+                            <p><strong>Phone:</strong> {{ application.phone }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date of Birth:</strong> {{ application.dob.strftime('%Y-%m-%d') }}</p>
+                            <p><strong>Gender:</strong> {{ application.gender }}</p>
+                            <p><strong>Application Date:</strong> {{ application.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Academic Background</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Previous Institution:</strong> {{ application.prev_institution }}</p>
+                            <p><strong>Qualification:</strong> {{ application.qualification }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Year of Graduation:</strong> {{ application.grad_year }}</p>
+                            <p><strong>GPA/Grade:</strong> {{ application.gpa }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Program Selection</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Preferred Course:</strong> {{ application.course }}</p>
+                            <p><strong>Study Mode:</strong> {{ application.study_mode }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Campus:</strong> {{ application.campus or 'Not specified' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Uploaded Documents</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% if application.id_document %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">ID Document</h6>
+                                    <p class="card-text small">{{ application.id_document.split('/')[-1] }}</p>
+                                    <a href="{{ url_for('static', filename=application.id_document) }}" class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="card mb-3 bg-light">
+                                <div class="card-body text-center">
+                                    <p class="mb-0">No ID Document</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            {% if application.transcript %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Transcript</h6>
+                                    <p class="card-text small">{{ application.transcript.split('/')[-1] }}</p>
+                                    <a href="{{ url_for('static', filename=application.transcript) }}" class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="card mb-3 bg-light">
+                                <div class="card-body text-center">
+                                    <p class="mb-0">No Transcript</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            {% if application.passport_photo %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Passport Photo</h6>
+                                    <p class="card-text small">{{ application.passport_photo.split('/')[-1] }}</p>
+                                    <a href="{{ url_for('static', filename=application.passport_photo) }}" class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="card mb-3 bg-light">
+                                <div class="card-body text-center">
+                                    <p class="mb-0">No Passport Photo</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Status Update Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Update Status</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.update_application_status', id=application.id) }}">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="Pending" {% if application.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Reviewing" {% if application.status == 'Reviewing' %}selected{% endif %}>Reviewing</option>
+                            <option value="Accepted" {% if application.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                            <option value="Rejected" {% if application.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin_notes" class="form-label">Admin Notes</label>
+                        <textarea class="form-control" id="admin_notes" name="admin_notes" rows="6">{{ application.admin_notes or '' }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contact Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Contact Applicant</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <a href="mailto:{{ application.email }}" class="btn btn-info w-100 mb-2">
+                        <i class="fas fa-envelope"></i> Email
+                    </a>
+                    {% if application.phone %}
+                    <a href="tel:{{ application.phone }}" class="btn btn-success w-100">
+                        <i class="fas fa-phone"></i> Call
+                    </a>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="text-center">
+                    <a href="{{ url_for('admin.applications') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Applications
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
