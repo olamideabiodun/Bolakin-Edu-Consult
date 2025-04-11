@@ -17,6 +17,6 @@ pyjwt==2.6.0
 ua-parser==0.16.1
 redis==4.5.4
 sentry-sdk==1.19.1
-gevent==22.10.2
+gevent>=23.9.0
 gunicorn[gevent]
 boto3==1.26.112  # For AWS S3 file storage in production

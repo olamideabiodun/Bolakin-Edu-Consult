@@ -1,12 +1,14 @@
 import os
 from dotenv import load_dotenv
+from logging.handlers import RotatingFileHandler  # Added import for RotatingFileHandler
+import logging  # Added for logging module 
 
 # Load environment variables from .env file
 load_dotenv()
 
 class Config:
     """Base configuration class"""
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAIL_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
     MAIL_PORT = int(os.environ.get('SMTP_PORT', '587'))
@@ -19,7 +21,7 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload size
     
     # Site URL configuration - Used to replace hardcoded domain
-    SITE_URL = os.environ.get('SITE_URL', 'https://bolakineduconsult.com')
+    SITE_URL = os.environ.get('SITE_URL', 'https://bolakineduconsult.ng')
     
     # Pagination
     ITEMS_PER_PAGE = 10
@@ -32,8 +34,8 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'postgresql://postgres:postgres@localhost/bolakin_dev'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'sqlite:///bolakin_dev.db'
     SITE_URL = os.environ.get('SITE_URL', 'http://localhost:5000')
 
 
@@ -64,7 +66,8 @@ class ProductionConfig(Config):
         
         # Set up production logging
         import logging
-        from logging import StreamHandler, FileHandler
+        from logging import StreamHandler
+        # RotatingFileHandler already imported at the top of the file
         
         if cls.LOG_TO_STDOUT:
             # Log to stderr
@@ -94,6 +97,9 @@ class ProductionConfig(Config):
         
         app.logger.setLevel(getattr(logging, cls.LOG_LEVEL))
         app.logger.info('Bolakin Educational Consult startup')
+        
+        # Import render_template for error handler
+        from flask import render_template
         
         # Register exception handler to log unhandled exceptions
         @app.errorhandler(Exception)

@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, request, session, redirect, url_for
+from flask import Flask, request, session, redirect, url_for, render_template  # Added render_template
 from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from flask_mail import Mail
@@ -79,10 +79,10 @@ def create_app(config_name=None):
                 db.session.rollback()
                 app.logger.error(f"Error tracking page visit: {str(e)}")
     
-    # Create admin user on first run
-    @app.before_first_request
-    def create_admin_user():
-        with app.app_context():
+    # Create admin user on first run - This uses with_app_context instead of before_first_request, flask at it again
+    with app.app_context():
+        @app.cli.command("create-admin")
+        def create_admin_user():
             db.create_all()  # Create all tables if they don't exist
             
             # Check if admin exists, create if not
@@ -102,6 +102,9 @@ def create_app(config_name=None):
                     db.session.rollback()
                     app.logger.error(f"Error creating admin user: {str(e)}")
     
+    # Explicitly return the app
+    return app
+
 def register_error_handlers(app):
     """Register error handlers for the application"""
     

@@ -60,9 +60,19 @@ def dashboard():
         func.date(PageVisit.timestamp)
     ).order_by(func.date(PageVisit.timestamp)).all()
     
-    # Format for chart
-    visit_dates = [visit.date.strftime('%Y-%m-%d') for visit in daily_visits]
-    visit_counts = [visit.count for visit in daily_visits]
+    # Format for chart - handle both string and datetime types
+    visit_dates = []
+    visit_counts = []
+    
+    for visit in daily_visits:
+        # Check if visit.date is already a string
+        if isinstance(visit.date, str):
+            visit_dates.append(visit.date)
+        else:
+            # It's a datetime object, use strftime
+            visit_dates.append(visit.date.strftime('%Y-%m-%d'))
+        
+        visit_counts.append(visit.count)
     
     # Top pages in the last 30 days
     top_pages = db.session.query(
