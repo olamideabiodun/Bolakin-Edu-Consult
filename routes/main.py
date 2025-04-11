@@ -23,28 +23,136 @@ def index():
     return render_template('admission.html', subscription_status=subscription_status)
 
 
+
 @main.route('/blog')
 def blog():
     """Blog listing page"""
-    # This would be connected to a database in a real implementation
-    blog_posts = [
-        {
-            'title': 'Tips for Studying Abroad',
-            'date': 'April 1, 2025',
-            'excerpt': 'Planning to study abroad? Here are some essential tips to prepare...'
-        },
-        {
-            'title': 'Top Universities in Europe',
-            'date': 'March 25, 2025',
-            'excerpt': 'Discover the highest-ranked universities across Europe for international students...'
-        },
-        {
-            'title': 'Scholarship Opportunities for 2025',
-            'date': 'March 15, 2025',
-            'excerpt': 'A comprehensive guide to scholarship opportunities available for international students...'
-        }
-    ]
-    return render_template('blog.html', posts=blog_posts)
+    page = request.args.get('page', 1, type=int)
+    category_slug = request.args.get('category')
+    
+    # Base query
+    query = BlogPost.query.filter_by(is_published=True)
+    
+    # Apply category filter if specified
+    category = None
+    if category_slug:
+        category = BlogCategory.query.filter_by(slug=category_slug).first_or_404()
+        query = query.filter(BlogPost.categories.contains(category))
+    
+    # Paginate results
+    pagination = query.order_by(desc(BlogPost.created_at)).paginate(
+        page=page,
+        per_page=6,  # Show 6 posts per page
+        error_out=False
+    )
+    
+    posts = pagination.items
+    
+    # Get all categories for sidebar
+    categories = BlogCategory.query.all()
+    
+    # Get recent posts for sidebar
+    recent_posts = BlogPost.query.filter_by(is_published=True).order_by(
+        desc(BlogPost.created_at)
+    ).limit(5).all()
+    
+    # Get popular posts
+    popular_posts = BlogPost.query.filter_by(is_published=True).order_by(
+        desc(BlogPost.views_count)
+    ).limit(5).all()
+    
+    return render_template('blog/index.html', 
+                          posts=posts,
+                          pagination=pagination,
+                          categories=categories,
+                          current_category=category,
+                          recent_posts=recent_posts,
+                          popular_posts=popular_posts)
+
+
+@main.route('/blog/<string:slug>')
+def blog_post(slug):
+    """Single blog post page"""
+    # Get the post by slug
+    post = BlogPost.query.filter_by(slug=slug, is_published=True).first_or_404()
+    
+    # Increment view count
+    post.increment_view()
+    
+    # Get comments for this post
+    comments = BlogComment.query.filter_by(post_id=post.id, is_approved=True).order_by(
+        BlogComment.created_at
+    ).all()
+    
+    # Comment form
+    from forms.blog_forms import BlogCommentForm
+    form = BlogCommentForm()
+    
+    # Get categories for sidebar
+    categories = BlogCategory.query.all()
+    
+    # Get recent posts for sidebar
+    recent_posts = BlogPost.query.filter_by(is_published=True).order_by(
+        desc(BlogPost.created_at)
+    ).limit(5).all()
+    
+    # Get related posts (same category)
+    related_posts = []
+    if post.categories:
+        category_ids = [c.id for c in post.categories]
+        related_posts = BlogPost.query.filter(
+            BlogPost.is_published == True,
+            BlogPost.id != post.id,
+            BlogPost.categories.any(BlogCategory.id.in_(category_ids))
+        ).order_by(desc(BlogPost.created_at)).limit(3).all()
+    
+    # If not enough related posts by category, get recent posts
+    if len(related_posts) < 3:
+        more_posts = BlogPost.query.filter(
+            BlogPost.is_published == True,
+            BlogPost.id != post.id,
+            ~BlogPost.id.in_([p.id for p in related_posts])
+        ).order_by(desc(BlogPost.created_at)).limit(3 - len(related_posts)).all()
+        related_posts.extend(more_posts)
+    
+    return render_template('blog/post.html',
+                          post=post,
+                          comments=comments,
+                          form=form,
+                          categories=categories,
+                          recent_posts=recent_posts,
+                          related_posts=related_posts)
+
+
+@main.route('/blog/<string:slug>/comment', methods=['POST'])
+def blog_post_comment(slug):
+    """Handle comment submission"""
+    # Get the post by slug
+    post = BlogPost.query.filter_by(slug=slug, is_published=True).first_or_404()
+    
+    # Process form
+    from forms.blog_forms import BlogCommentForm
+    form = BlogCommentForm()
+    
+    if form.validate_on_submit():
+        comment = BlogComment(
+            content=form.content.data,
+            author_name=form.author_name.data,
+            author_email=form.author_email.data,
+            post_id=post.id,
+            is_approved=False  # Comments require approval
+        )
+        
+        try:
+            db.session.add(comment)
+            db.session.commit()
+            flash('Your comment has been submitted and is pending approval.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error submitting comment: {str(e)}")
+            flash('An error occurred. Please try again.', 'danger')
+    
+    return redirect(url_for('main.blog_post', slug=slug))
 
 
 @main.route('/gallery')
@@ -237,89 +345,122 @@ def send_subscriber_confirmation(email):
 
 def send_application_notification(application):
     """Send notification about new admission application"""
-    admin_email = current_app.config['ADMIN_EMAIL']
-    
-    msg = MIMEMultipart()
-    msg['From'] = current_app.config['MAIL_DEFAULT_SENDER']
-    msg['To'] = admin_email
-    msg['Subject'] = f'New Admission Application: {application.full_name}'
-    
-    email_body = f"""
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; }}
-            h2 {{ color: #FF9933; }}
-            .section {{ margin-bottom: 20px; }}
-            .label {{ font-weight: bold; }}
-            table {{ border-collapse: collapse; width: 100%; }}
-            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-            th {{ background-color: #f2f2f2; }}
-        </style>
-    </head>
-    <body>
-        <h2>New Admission Application</h2>
+    try:
+        admin_email = current_app.config['ADMIN_EMAIL']
         
-        <div class="section">
-            <h3>Personal Information</h3>
-            <table>
-                <tr><td class="label">Full Name:</td><td>{application.full_name}</td></tr>
-                <tr><td class="label">Email:</td><td>{application.email}</td></tr>
-                <tr><td class="label">Phone:</td><td>{application.phone}</td></tr>
-                <tr><td class="label">Date of Birth:</td><td>{application.dob}</td></tr>
-                <tr><td class="label">Gender:</td><td>{application.gender}</td></tr>
-            </table>
-        </div>
+        msg = MIMEMultipart()
+        msg['From'] = current_app.config['MAIL_DEFAULT_SENDER']
+        msg['To'] = admin_email
+        msg['Subject'] = f'New Admission Application: {application.full_name}'
         
-        <div class="section">
-            <h3>Academic Background</h3>
-            <table>
-                <tr><td class="label">Previous Institution:</td><td>{application.prev_institution}</td></tr>
-                <tr><td class="label">Qualification:</td><td>{application.qualification}</td></tr>
-                <tr><td class="label">Year of Graduation:</td><td>{application.grad_year}</td></tr>
-                <tr><td class="label">GPA/Grade:</td><td>{application.gpa}</td></tr>
-            </table>
-        </div>
+        email_body = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; }}
+                h2 {{ color: #FF9933; }}
+                .section {{ margin-bottom: 20px; }}
+                .label {{ font-weight: bold; }}
+                table {{ border-collapse: collapse; width: 100%; }}
+                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                th {{ background-color: #f2f2f2; }}
+            </style>
+        </head>
+        <body>
+            <h2>New Admission Application</h2>
+            
+            <div class="section">
+                <h3>Personal Information</h3>
+                <table>
+                    <tr><td class="label">Full Name:</td><td>{application.full_name}</td></tr>
+                    <tr><td class="label">Email:</td><td>{application.email}</td></tr>
+                    <tr><td class="label">Phone:</td><td>{application.phone}</td></tr>
+                    <tr><td class="label">Date of Birth:</td><td>{application.dob}</td></tr>
+                    <tr><td class="label">Gender:</td><td>{application.gender}</td></tr>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h3>Academic Background</h3>
+                <table>
+                    <tr><td class="label">Previous Institution:</td><td>{application.prev_institution}</td></tr>
+                    <tr><td class="label">Qualification:</td><td>{application.qualification}</td></tr>
+                    <tr><td class="label">Year of Graduation:</td><td>{application.grad_year}</td></tr>
+                    <tr><td class="label">GPA/Grade:</td><td>{application.gpa}</td></tr>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h3>Program Selection</h3>
+                <table>
+                    <tr><td class="label">Preferred Course:</td><td>{application.course}</td></tr>
+                    <tr><td class="label">Study Mode:</td><td>{application.study_mode}</td></tr>
+                    <tr><td class="label">Campus:</td><td>{application.campus or 'Not specified'}</td></tr>
+                </table>
+            </div>
+            
+            <p>Please review this application in the <a href="{current_app.config['SITE_URL']}/admin/dashboard/applications/{application.id}">admin dashboard</a>.</p>
+        </body>
+        </html>
+        """
         
-        <div class="section">
-            <h3>Program Selection</h3>
-            <table>
-                <tr><td class="label">Preferred Course:</td><td>{application.course}</td></tr>
-                <tr><td class="label">Study Mode:</td><td>{application.study_mode}</td></tr>
-                <tr><td class="label">Campus:</td><td>{application.campus or 'Not specified'}</td></tr>
-            </table>
-        </div>
+        msg.attach(MIMEText(email_body, 'html'))
         
-        <p>Please review this application in the <a href="https://yourdomain.com/admin/applications/{application.id}">admin dashboard</a>.</p>
-    </body>
-    </html>
-    """
-    
-    msg.attach(MIMEText(email_body, 'html'))
-    
-    # Attach files if available
-    file_paths = [
-        (application.id_document, "ID Document"),
-        (application.transcript, "Transcript"),
-        (application.passport_photo, "Passport Photo")
-    ]
-    
-    for file_path, file_desc in file_paths:
-        if file_path and os.path.exists(file_path):
-            try:
-                with open(file_path, 'rb') as f:
-                    filename = os.path.basename(file_path)
-                    attachment = MIMEApplication(f.read(), _subtype="octet-stream")
-                    attachment.add_header('Content-Disposition', 'attachment', 
-                                        filename=f"{file_desc}-{application.full_name}-{filename}")
-                    msg.attach(attachment)
-            except Exception as e:
-                current_app.logger.error(f"Error attaching file {file_path}: {str(e)}")
-    
-    with smtplib.SMTP(current_app.config['MAIL_SERVER'], current_app.config['MAIL_PORT']) as server:
-        server.starttls()
-        server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
-        server.send_message(msg)
+        # Attach files if available
+        file_paths = [
+            (application.id_document, "ID Document"),
+            (application.transcript, "Transcript"),
+            (application.passport_photo, "Passport Photo")
+        ]
+        
+        for file_path, file_desc in file_paths:
+            if file_path and os.path.exists(file_path):
+                try:
+                    with open(file_path, 'rb') as f:
+                        filename = os.path.basename(file_path)
+                        attachment = MIMEApplication(f.read(), _subtype="octet-stream")
+                        attachment.add_header('Content-Disposition', 'attachment', 
+                                            filename=f"{file_desc}-{application.full_name}-{filename}")
+                        msg.attach(attachment)
+                except Exception as e:
+                    current_app.logger.error(f"Error attaching file {file_path}: {str(e)}")
+        
+        # Configure SMTP with explicit error logging
+        try:
+            smtp_server = current_app.config['MAIL_SERVER']
+            smtp_port = current_app.config['MAIL_PORT']
+            smtp_username = current_app.config['MAIL_USERNAME']
+            smtp_password = current_app.config['MAIL_PASSWORD']
+            
+            current_app.logger.info(f"Connecting to SMTP server: {smtp_server}:{smtp_port}")
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.set_debuglevel(1)  # Enable SMTP debug output
+                server.ehlo()  # Identify ourselves to the server
+                server.starttls()
+                server.ehlo()  # Re-identify ourselves over TLS connection
+                
+                current_app.logger.info("Attempting SMTP login")
+                server.login(smtp_username, smtp_password)
+                
+                current_app.logger.info(f"Sending email to {admin_email}")
+                server.send_message(msg)
+                current_app.logger.info("Email sent successfully")
+                
+                return True
+        except smtplib.SMTPAuthenticationError as e:
+            current_app.logger.error(f"SMTP Authentication Error: {str(e)}")
+            raise Exception(f"SMTP Authentication failed: {str(e)}")
+        except smtplib.SMTPException as e:
+            current_app.logger.error(f"SMTP Error: {str(e)}")
+            raise Exception(f"SMTP Error: {str(e)}")
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error during SMTP connection: {str(e)}")
+            raise
+    except Exception as e:
+        current_app.logger.error(f"Error in send_application_notification: {str(e)}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        raise
 
 
 
@@ -404,6 +545,7 @@ def save_file(file, directory, filename=None):
 # Use in the submit_admission route
 
 @main.route('/submit-admission', methods=['POST'])
+@main.route('/submit-admission', methods=['POST'])
 def submit_admission():
     """Handle admission application submission"""
     if request.method == 'POST':
@@ -466,6 +608,14 @@ def submit_admission():
                 'photoUpload': 'passport_photo'
             }
             
+            # Ensure uploads folder exists
+            if not os.path.exists(uploads_folder):
+                os.makedirs(uploads_folder, exist_ok=True)
+            
+            # Ensure applicant folder exists
+            if not os.path.exists(applicant_folder):
+                os.makedirs(applicant_folder, exist_ok=True)
+                
             for file_key, db_field in file_mappings.items():
                 if file_key in request.files:
                     file = request.files[file_key]
@@ -482,19 +632,33 @@ def submit_admission():
             # Save application to database
             db.session.add(application)
             db.session.commit()
+            current_app.logger.info(f"Application saved to database with ID: {application.id}")
             
             # Send email notification to admin
+            email_sent = False
             try:
                 send_application_notification(application)
+                email_sent = True
+                current_app.logger.info(f"Notification email sent for application ID: {application.id}")
             except Exception as e:
                 current_app.logger.error(f"Error sending notification email: {str(e)}")
                 # Continue even if email fails - the application is saved
             
-            return jsonify({'success': True, 'message': 'Application submitted successfully'})
+            response_message = 'Application submitted successfully'
+            if not email_sent:
+                response_message += ', but there was an issue sending the notification email. Your application has been saved and will be reviewed.'
+                
+            return jsonify({
+                'success': True, 
+                'message': response_message,
+                'applicationId': application.id
+            })
             
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error processing admission form: {str(e)}")
-            return jsonify({'success': False, 'message': 'An error occurred while processing your application'})
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            return jsonify({'success': False, 'message': 'An error occurred while processing your application. Please try again or contact support.'})
     
     return jsonify({'success': False, 'message': 'Invalid request method'})

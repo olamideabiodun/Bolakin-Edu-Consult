@@ -793,3 +793,393 @@ def send_scheduled_newsletters():
             except Exception as e:
                 db.session.rollback()
                 current_app.logger.error(f"Error sending scheduled newsletter: {str(e)}")
+
+
+# Blog Management Routes
+@admin.route('/blog')
+@login_required
+@admin_required
+def blog_posts():
+    """List all blog posts"""
+    page = request.args.get('page', 1, type=int)
+    status = request.args.get('status', 'all')
+    
+    # Base query
+    query = BlogPost.query
+    
+    # Apply filters
+    if status == 'published':
+        query = query.filter_by(is_published=True)
+    elif status == 'draft':
+        query = query.filter_by(is_published=False)
+    
+    # Paginate results
+    pagination = query.order_by(desc(BlogPost.created_at)).paginate(
+        page=page, 
+        per_page=current_app.config['ITEMS_PER_PAGE'],
+        error_out=False
+    )
+    
+    posts = pagination.items
+    
+    return render_template('admin/blog/posts.html', 
+                          posts=posts,
+                          pagination=pagination,
+                          status=status)
+
+
+@admin.route('/blog/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_blog_post():
+    """Create a new blog post"""
+    from forms.blog_forms import BlogPostForm
+    
+    form = BlogPostForm()
+    
+    # Load categories for the select field
+    categories = BlogCategory.query.all()
+    form.categories.choices = [(c.id, c.name) for c in categories]
+    
+    if form.validate_on_submit():
+        # Generate slug if not provided
+        slug = form.slug.data if form.slug.data else slugify(form.title.data)
+        
+        # Check for duplicate slug
+        existing_post = BlogPost.query.filter_by(slug=slug).first()
+        if existing_post:
+            flash('A post with this slug already exists. Please choose a different slug.', 'danger')
+            return render_template('admin/blog/form.html', form=form, title='Create Post')
+        
+        # Handle featured image upload
+        featured_image_path = None
+        if form.featured_image.data:
+            try:
+                uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog')
+                os.makedirs(uploads_folder, exist_ok=True)
+                
+                # Save the file
+                filename = secure_filename(form.featured_image.data.filename)
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                filename = f"{timestamp}_{filename}"
+                
+                filepath = os.path.join(uploads_folder, filename)
+                form.featured_image.data.save(filepath)
+                
+                # Store the relative path
+                featured_image_path = os.path.join('uploads', 'blog', filename)
+            except Exception as e:
+                current_app.logger.error(f"Error uploading featured image: {str(e)}")
+                flash('Error uploading image. Please try again.', 'danger')
+        
+        # Create blog post
+        post = BlogPost(
+            title=form.title.data,
+            slug=slug,
+            excerpt=form.excerpt.data,
+            content=form.content.data,
+            featured_image=featured_image_path,
+            is_published=form.is_published.data,
+            author_id=current_user.id
+        )
+        
+        # Add selected categories
+        if form.categories.data:
+            selected_categories = BlogCategory.query.filter(BlogCategory.id.in_(form.categories.data)).all()
+            post.categories = selected_categories
+        
+        try:
+            db.session.add(post)
+            db.session.commit()
+            flash('Blog post created successfully!', 'success')
+            return redirect(url_for('admin.blog_posts'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error creating blog post: {str(e)}")
+            flash('An error occurred. Please try again.', 'danger')
+    
+    return render_template('admin/blog/form.html', form=form, title='Create Blog Post')
+
+
+@admin.route('/blog/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_blog_post(id):
+    """Edit an existing blog post"""
+    from forms.blog_forms import BlogPostForm
+    
+    post = BlogPost.query.get_or_404(id)
+    
+    form = BlogPostForm(obj=post)
+    
+    # Load categories for the select field
+    categories = BlogCategory.query.all()
+    form.categories.choices = [(c.id, c.name) for c in categories]
+    
+    if request.method == 'GET':
+        # Set the selected categories
+        form.categories.data = [c.id for c in post.categories]
+    
+    if form.validate_on_submit():
+        # Check if slug changed and if new slug is unique
+        if form.slug.data != post.slug:
+            existing_post = BlogPost.query.filter_by(slug=form.slug.data).first()
+            if existing_post and existing_post.id != post.id:
+                flash('A post with this slug already exists. Please choose a different slug.', 'danger')
+                return render_template('admin/blog/form.html', form=form, post=post, title='Edit Blog Post')
+        
+        # Handle featured image upload
+        if form.featured_image.data:
+            try:
+                uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog')
+                os.makedirs(uploads_folder, exist_ok=True)
+                
+                # Save the file
+                filename = secure_filename(form.featured_image.data.filename)
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                filename = f"{timestamp}_{filename}"
+                
+                filepath = os.path.join(uploads_folder, filename)
+                form.featured_image.data.save(filepath)
+                
+                # Delete old image if exists
+                if post.featured_image and os.path.exists(post.featured_image):
+                    try:
+                        os.remove(post.featured_image)
+                    except Exception as e:
+                        current_app.logger.error(f"Error deleting old image: {str(e)}")
+                
+                # Store the relative path
+                post.featured_image = os.path.join('uploads', 'blog', filename)
+            except Exception as e:
+                current_app.logger.error(f"Error uploading featured image: {str(e)}")
+                flash('Error uploading image. The post will be updated without changing the image.', 'warning')
+        
+        # Update post data
+        post.title = form.title.data
+        post.slug = form.slug.data
+        post.excerpt = form.excerpt.data
+        post.content = form.content.data
+        post.is_published = form.is_published.data
+        
+        # Update categories
+        if form.categories.data:
+            selected_categories = BlogCategory.query.filter(BlogCategory.id.in_(form.categories.data)).all()
+            post.categories = selected_categories
+        else:
+            post.categories = []
+        
+        try:
+            db.session.commit()
+            flash('Blog post updated successfully!', 'success')
+            return redirect(url_for('admin.blog_posts'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating blog post: {str(e)}")
+            flash('An error occurred. Please try again.', 'danger')
+    
+    return render_template('admin/blog/form.html', form=form, post=post, title='Edit Blog Post')
+
+
+@admin.route('/blog/<int:id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_blog_post(id):
+    """Delete a blog post"""
+    post = BlogPost.query.get_or_404(id)
+    
+    try:
+        # Delete featured image if exists
+        if post.featured_image and os.path.exists(post.featured_image):
+            try:
+                os.remove(post.featured_image)
+            except Exception as e:
+                current_app.logger.error(f"Error deleting image: {str(e)}")
+        
+        # Delete the post
+        db.session.delete(post)
+        db.session.commit()
+        flash('Blog post deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting blog post: {str(e)}")
+        flash('An error occurred. Please try again.', 'danger')
+    
+    return redirect(url_for('admin.blog_posts'))
+
+
+# Blog Categories Management
+@admin.route('/blog/categories')
+@login_required
+@admin_required
+def blog_categories():
+    """List all blog categories"""
+    categories = BlogCategory.query.order_by(BlogCategory.name).all()
+    return render_template('admin/blog/categories.html', categories=categories)
+
+
+@admin.route('/blog/categories/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_blog_category():
+    """Create a new blog category"""
+    from forms.blog_forms import BlogCategoryForm
+    
+    form = BlogCategoryForm()
+    
+    if form.validate_on_submit():
+        # Check for duplicate slug
+        existing_category = BlogCategory.query.filter_by(slug=form.slug.data).first()
+        if existing_category:
+            flash('A category with this slug already exists. Please choose a different slug.', 'danger')
+            return render_template('admin/blog/category_form.html', form=form, title='Create Category')
+        
+        # Create category
+        category = BlogCategory(
+            name=form.name.data,
+            slug=form.slug.data,
+            description=form.description.data
+        )
+        
+        try:
+            db.session.add(category)
+            db.session.commit()
+            flash('Category created successfully!', 'success')
+            return redirect(url_for('admin.blog_categories'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error creating category: {str(e)}")
+            flash('An error occurred. Please try again.', 'danger')
+    
+    return render_template('admin/blog/category_form.html', form=form, title='Create Category')
+
+
+@admin.route('/blog/categories/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_blog_category(id):
+    """Edit an existing blog category"""
+    from forms.blog_forms import BlogCategoryForm
+    
+    category = BlogCategory.query.get_or_404(id)
+    form = BlogCategoryForm(obj=category)
+    
+    if form.validate_on_submit():
+        # Check if slug changed and if new slug is unique
+        if form.slug.data != category.slug:
+            existing_category = BlogCategory.query.filter_by(slug=form.slug.data).first()
+            if existing_category:
+                flash('A category with this slug already exists. Please choose a different slug.', 'danger')
+                return render_template('admin/blog/category_form.html', form=form, category=category, title='Edit Category')
+        
+        # Update category
+        category.name = form.name.data
+        category.slug = form.slug.data
+        category.description = form.description.data
+        
+        try:
+            db.session.commit()
+            flash('Category updated successfully!', 'success')
+            return redirect(url_for('admin.blog_categories'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating category: {str(e)}")
+            flash('An error occurred. Please try again.', 'danger')
+    
+    return render_template('admin/blog/category_form.html', form=form, category=category, title='Edit Category')
+
+
+@admin.route('/blog/categories/<int:id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_blog_category(id):
+    """Delete a blog category"""
+    category = BlogCategory.query.get_or_404(id)
+    
+    # Check if category is in use
+    if category.posts:
+        flash('Cannot delete category that is assigned to posts. Remove the category from all posts first.', 'danger')
+        return redirect(url_for('admin.blog_categories'))
+    
+    try:
+        db.session.delete(category)
+        db.session.commit()
+        flash('Category deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting category: {str(e)}")
+        flash('An error occurred. Please try again.', 'danger')
+    
+    return redirect(url_for('admin.blog_categories'))
+
+
+# Blog Comments Management
+@admin.route('/blog/comments')
+@login_required
+@admin_required
+def blog_comments():
+    """List all blog comments"""
+    page = request.args.get('page', 1, type=int)
+    status = request.args.get('status', 'all')
+    
+    # Base query
+    query = BlogComment.query
+    
+    # Apply filters
+    if status == 'approved':
+        query = query.filter_by(is_approved=True)
+    elif status == 'pending':
+        query = query.filter_by(is_approved=False)
+    
+    # Paginate results
+    pagination = query.order_by(desc(BlogComment.created_at)).paginate(
+        page=page, 
+        per_page=current_app.config['ITEMS_PER_PAGE'],
+        error_out=False
+    )
+    
+    comments = pagination.items
+    
+    return render_template('admin/blog/comments.html', 
+                          comments=comments,
+                          pagination=pagination,
+                          status=status)
+
+
+@admin.route('/blog/comments/<int:id>/approve', methods=['POST'])
+@login_required
+@admin_required
+def approve_comment(id):
+    """Approve a blog comment"""
+    comment = BlogComment.query.get_or_404(id)
+    
+    comment.is_approved = True
+    
+    try:
+        db.session.commit()
+        flash('Comment approved successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error approving comment: {str(e)}")
+        flash('An error occurred. Please try again.', 'danger')
+    
+    return redirect(url_for('admin.blog_comments'))
+
+
+@admin.route('/blog/comments/<int:id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_comment(id):
+    """Delete a blog comment"""
+    comment = BlogComment.query.get_or_404(id)
+    
+    try:
+        db.session.delete(comment)
+        db.session.commit()
+        flash('Comment deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting comment: {str(e)}")
+        flash('An error occurred. Please try again.', 'danger')
+    
+    return redirect(url_for('admin.blog_comments'))

@@ -1,0 +1,743 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Blog Page Styles */
+    .blog-hero {
+        background-color: #000;
+        position: relative;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .blog-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1;
+    }
+    
+    .blog-hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        color: white;
+        padding: 20px;
+        max-width: 800px;
+    }
+    
+    .blog-hero-content h1 {
+        font-size: 48px;
+        color: #FF9933;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .blog-hero-content p {
+        font-size: 18px;
+        color: rgba(255,255,255,0.9);
+        line-height: 1.6;
+    }
+    
+    .blog-hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+    }
+    
+    /* Blog Section Layout */
+    .blog-section {
+        padding: 80px 0;
+        background-color: #f9f9f9;
+    }
+    
+    .blog-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+    }
+    
+    .blog-main {
+        flex: 2;
+        min-width: 300px;
+    }
+    
+    .blog-sidebar {
+        flex: 1;
+        min-width: 250px;
+    }
+    
+    /* Blog Post Card */
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+    }
+    
+    .blog-card {
+        background-color: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .blog-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .blog-card-image {
+        height: 200px;
+        overflow: hidden;
+    }
+    
+    .blog-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .blog-card:hover .blog-card-image img {
+        transform: scale(1.1);
+    }
+    
+    .blog-card-content {
+        padding: 25px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .blog-card-meta {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .blog-card-meta .date {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+    }
+    
+    .blog-card-meta .category {
+        display: flex;
+        align-items: center;
+    }
+    
+    .blog-card-meta i {
+        margin-right: 5px;
+        color: #FF9933;
+    }
+    
+    .blog-card-title {
+        font-size: 22px;
+        color: #333;
+        margin-bottom: 15px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+    
+    .blog-card-title a {
+        color: #333;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .blog-card-title a:hover {
+        color: #FF9933;
+    }
+    
+    .blog-card-excerpt {
+        color: #555;
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    
+    .blog-card-link {
+        margin-top: auto;
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #FF9933;
+        color: white;
+        text-decoration: none;
+        border-radius: 30px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        align-self: flex-start;
+    }
+    
+    .blog-card-link:hover {
+        background-color: #FF8C00;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);
+    }
+    
+    /* Sidebar Widgets */
+    .widget {
+        background-color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .widget-title {
+        color: #FF9933;
+        font-size: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(255, 153, 51, 0.1);
+        position: relative;
+    }
+    
+    .widget-title::after {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 2px;
+        background-color: #FF9933;
+        bottom: -2px;
+        left: 0;
+    }
+    
+    /* Categories Widget */
+    .widget-categories ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .widget-categories li {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+    }
+    
+    .widget-categories li:last-child {
+        border-bottom: none;
+    }
+    
+    .widget-categories a {
+        color: #333;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .widget-categories a:hover {
+        color: #FF9933;
+    }
+    
+    .widget-categories .count {
+        background-color: rgba(255, 153, 51, 0.1);
+        color: #FF9933;
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 30px;
+    }
+    
+    /* Recent Posts Widget */
+    .recent-post {
+        display: flex;
+        margin-bottom: 20px;
+    }
+    
+    .recent-post:last-child {
+        margin-bottom: 0;
+    }
+    
+    .recent-post-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .recent-post-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .recent-post-content {
+        flex-grow: 1;
+    }
+    
+    .recent-post-title {
+        font-size: 16px;
+        margin-bottom: 5px;
+        line-height: 1.4;
+    }
+    
+    .recent-post-title a {
+        color: #333;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .recent-post-title a:hover {
+        color: #FF9933;
+    }
+    
+    .recent-post-date {
+        font-size: 12px;
+        color: #666;
+    }
+    
+    /* Search Widget */
+    .blog-search-form {
+        display: flex;
+    }
+    
+    .blog-search-input {
+        flex-grow: 1;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-right: none;
+        border-radius: 30px 0 0 30px;
+        font-size: 14px;
+    }
+    
+    .blog-search-input:focus {
+        outline: none;
+        border-color: #FF9933;
+    }
+    
+    .blog-search-btn {
+        background-color: #FF9933;
+        color: white;
+        border: none;
+        padding: 0 20px;
+        border-radius: 0 30px 30px 0;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    
+    .blog-search-btn:hover {
+        background-color: #FF8C00;
+    }
+    
+    /* Tags Widget */
+    .widget-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .tag {
+        display: inline-block;
+        padding: 5px 15px;
+        background-color: rgba(255, 153, 51, 0.1);
+        color: #FF9933;
+        border-radius: 30px;
+        font-size: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .tag:hover {
+        background-color: #FF9933;
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    /* Pagination */
+    .blog-pagination {
+        margin-top: 50px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .pagination li {
+        margin: 0 5px;
+    }
+    
+    .pagination a, .pagination span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: white;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .pagination a:hover {
+        background-color: #FF9933;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);
+    }
+    
+    .pagination .active span {
+        background-color: #FF9933;
+        color: white;
+    }
+    
+    .pagination .disabled span {
+        color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    /* Category Badge */
+    .category-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        background-color: rgba(255, 153, 51, 0.1);
+        color: #FF9933;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .category-badge:hover {
+        background-color: #FF9933;
+        color: white;
+    }
+    
+    /* Category Filter */
+    .category-filter {
+        margin-bottom: 30px;
+    }
+    
+    .filter-title {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .filter-badges {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .empty-state-icon {
+        font-size: 60px;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state-title {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state-text {
+        color: #666;
+        margin-bottom: 30px;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .blog-hero {
+            height: 350px;
+        }
+        
+        .blog-hero-content h1 {
+            font-size: 36px;
+        }
+        
+        .blog-container {
+            flex-direction: column;
+        }
+        
+        .blog-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Blog Hero Section -->
+<section class="blog-hero">
+    <img src="{{ url_for('static', filename='images/blog/hero-bg.jpg') }}" alt="Blog" class="blog-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+    <div class="blog-hero-content">
+        <h1 data-aos="fade-up">
+            {% if current_category %}
+            {{ current_category.name }}
+            {% else %}
+            Our Blog
+            {% endif %}
+        </h1>
+        <p data-aos="fade-up" data-aos-delay="200">
+            {% if current_category %}
+            {{ current_category.description or 'Explore our articles and insights about ' + current_category.name }}
+            {% else %}
+            Stay informed with the latest educational news, study abroad tips, and student success stories.
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+<!-- Blog Content Section -->
+<section class="blog-section">
+    <div class="container">
+        <div class="blog-container">
+            <!-- Main Content -->
+            <div class="blog-main">
+                {% if current_category %}
+                <div class="category-filter">
+                    <div class="filter-badges">
+                        <a href="{{ url_for('main.blog') }}" class="category-badge">
+                            <i class="fas fa-times"></i> Clear Filter
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if posts %}
+                <div class="blog-grid">
+                    {% for post in posts %}
+                    <div class="blog-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                        <div class="blog-card-image">
+                            {% if post.featured_image %}
+                            <img src="{{ url_for('static', filename=post.featured_image) }}" alt="{{ post.title }}">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ post.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                            {% endif %}
+                        </div>
+                        <div class="blog-card-content">
+                            <div class="blog-card-meta">
+                                <div class="date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    {{ post.formatted_date }}
+                                </div>
+                                {% if post.categories %}
+                                <div class="category">
+                                    <i class="far fa-folder-open"></i>
+                                    {{ post.categories[0].name }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <h2 class="blog-card-title">
+                                <a href="{{ url_for('main.blog_post', slug=post.slug) }}">{{ post.title }}</a>
+                            </h2>
+                            <div class="blog-card-excerpt">
+                                {% if post.excerpt %}
+                                {{ post.excerpt }}
+                                {% else %}
+                                {{ post.content|striptags|truncate(150) }}
+                                {% endif %}
+                            </div>
+                            <a href="{{ url_for('main.blog_post', slug=post.slug) }}" class="blog-card-link">
+                                Read More <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination.pages > 1 %}
+                <div class="blog-pagination">
+                    <ul class="pagination">
+                        {% if pagination.has_prev %}
+                        <li>
+                            <a href="{{ url_for('main.blog', page=pagination.prev_num, category=current_category.slug if current_category else None) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="disabled">
+                            <span><i class="fas fa-chevron-left"></i></span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page in pagination.iter_pages() %}
+                            {% if page %}
+                                {% if page == pagination.page %}
+                                <li class="active">
+                                    <span>{{ page }}</span>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <a href="{{ url_for('main.blog', page=page, category=current_category.slug if current_category else None) }}">{{ page }}</a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="disabled">
+                                    <span>...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                        <li>
+                            <a href="{{ url_for('main.blog', page=pagination.next_num, category=current_category.slug if current_category else None) }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="disabled">
+                            <span><i class="fas fa-chevron-right"></i></span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <!-- Empty State -->
+                <div class="empty-state" data-aos="fade-up">
+                    <div class="empty-state-icon">
+                        <i class="far fa-newspaper"></i>
+                    </div>
+                    <h2 class="empty-state-title">No Posts Found</h2>
+                    <p class="empty-state-text">
+                        {% if current_category %}
+                        There are no posts in this category yet. Check back soon or explore other categories.
+                        {% else %}
+                        We haven't published any blog posts yet. Check back soon for updates!
+                        {% endif %}
+                    </p>
+                    {% if current_category %}
+                    <a href="{{ url_for('main.blog') }}" class="blog-card-link">
+                        View All Posts <i class="fas fa-arrow-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="blog-sidebar">
+                <!-- Search Widget -->
+                <div class="widget widget-search">
+                    <h3 class="widget-title">Search</h3>
+                    <form action="{{ url_for('main.blog') }}" method="GET" class="blog-search-form">
+                        <input type="text" name="search" placeholder="Search posts..." class="blog-search-input">
+                        <button type="submit" class="blog-search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Categories Widget -->
+                <div class="widget widget-categories">
+                    <h3 class="widget-title">Categories</h3>
+                    <ul>
+                        {% for category in categories %}
+                        <li>
+                            <a href="{{ url_for('main.blog', category=category.slug) }}">
+                                {{ category.name }}
+                                <span class="count">{{ category.posts|length }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <!-- Recent Posts Widget -->
+                <div class="widget widget-recent-posts">
+                    <h3 class="widget-title">Recent Posts</h3>
+                    {% for post in recent_posts %}
+                    <div class="recent-post">
+                        <div class="recent-post-image">
+                            {% if post.featured_image %}
+                            <img src="{{ url_for('static', filename=post.featured_image) }}" alt="{{ post.title }}">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ post.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                            {% endif %}
+                        </div>
+                        <div class="recent-post-content">
+                            <h4 class="recent-post-title">
+                                <a href="{{ url_for('main.blog_post', slug=post.slug) }}">{{ post.title }}</a>
+                            </h4>
+                            <div class="recent-post-date">
+                                <i class="far fa-calendar-alt"></i> {{ post.formatted_date }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Popular Posts Widget -->
+                <div class="widget widget-recent-posts">
+                    <h3 class="widget-title">Popular Posts</h3>
+                    {% for post in popular_posts %}
+                    <div class="recent-post">
+                        <div class="recent-post-image">
+                            {% if post.featured_image %}
+                            <img src="{{ url_for('static', filename=post.featured_image) }}" alt="{{ post.title }}">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ post.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                            {% endif %}
+                        </div>
+                        <div class="recent-post-content">
+                            <h4 class="recent-post-title">
+                                <a href="{{ url_for('main.blog_post', slug=post.slug) }}">{{ post.title }}</a>
+                            </h4>
+                            <div class="recent-post-date">
+                                <i class="far fa-eye"></i> {{ post.views_count }} views
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Tags Widget -->
+                <div class="widget">
+                    <h3 class="widget-title">Tags</h3>
+                    <div class="widget-tags">
+                        {% for category in categories %}
+                        <a href="{{ url_for('main.blog', category=category.slug) }}" class="tag">{{ category.name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include 'components/newsletter.html' %}
+{% endblock %}

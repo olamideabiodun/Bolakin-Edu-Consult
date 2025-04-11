@@ -1,4 +1,4 @@
-/* Preloader */
+/* Preloader - Fixed version */
 .preloader {
     position: fixed;
     width: 100%;
@@ -8,6 +8,8 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    top: 0;
+    left: 0;
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
@@ -51,48 +53,7 @@
         transform: scale(1);
         opacity: 1;
     }
-}/* Reset and base styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
-
-html {
-    scroll-behavior: smooth;
-}
-
-body {
-    font-family: 'Poppins', sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #fff;
-    overflow-x: hidden;
-    font-size: 16px;
-}
-
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-
-/* Typography enhancements */
-p {
-    line-height: 1.8;
-    letter-spacing: 0.02em;
-    color: #555;
-}
-
-h1, h2, h3, h4, h5, h6 {
-    letter-spacing: 0.01em;
-    line-height: 1.4;
-    font-weight: 600;
-}
-
 /* Header */
 header {
     background-color: #000;

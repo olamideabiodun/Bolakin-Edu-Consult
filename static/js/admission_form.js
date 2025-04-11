@@ -7,6 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeBtn = document.querySelector('.close-btn');
     const admissionForm = document.getElementById('admissionForm');
     
+    if (!openFormBtn || !modal || !closeBtn || !admissionForm) {
+        console.warn('Admission form elements not found on this page');
+        return; // Exit function if elements don't exist
+    }
+    
     // File Upload Elements
     const fileInputs = [
         { input: document.getElementById('idUpload'), info: document.getElementById('idUploadInfo') },
@@ -92,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Email validation
         const emailField = document.getElementById('email');
-        if (emailField.value && !validateEmail(emailField.value)) {
+        if (emailField && emailField.value && !validateEmail(emailField.value)) {
             isValid = false;
             emailField.classList.add('error');
             
@@ -173,11 +178,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Append to form footer
         const formFooter = document.querySelector('.form-footer');
-        formFooter.prepend(messageElement);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            messageElement.remove();
-        }, 5000);
+        if (formFooter) {
+            formFooter.prepend(messageElement);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                messageElement.remove();
+            }, 5000);
+        }
     }
 });

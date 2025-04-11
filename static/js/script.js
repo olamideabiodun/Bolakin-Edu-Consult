@@ -1,7 +1,26 @@
 // Script for Bolakin Educational Consult website with enhanced animations
 
-// Handle preloader
 document.addEventListener('DOMContentLoaded', function() {
+    // Hide preloader immediately after DOMContentLoaded
+    const preloader = document.querySelector('.preloader');
+    if (preloader) {
+        // For cases where the page loads quickly
+        preloader.classList.add('loaded');
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    }
+    
+    // Also handle the window.load event (for all resources like images)
+    window.addEventListener('load', function() {
+        if (preloader) {
+            preloader.classList.add('loaded');
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 500);
+        }
+    });
+    
     // Initialize AOS (Animate On Scroll)
     AOS.init({
         duration: 1000,
@@ -163,43 +182,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Improved scroll to top button functionality with smoother animation
     const scrollToTopBtn = document.querySelector('.scroll-to-top a');
     
-    window.addEventListener('scroll', function() {
-        if (window.pageYOffset > 300) {
-            scrollToTopBtn.style.opacity = '1';
-            scrollToTopBtn.style.visibility = 'visible';
-        } else {
-            scrollToTopBtn.style.opacity = '0';
-            scrollToTopBtn.style.visibility = 'hidden';
-        }
-    });
-    
-    scrollToTopBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // Smooth scroll to top with custom easing
-        const startPosition = window.pageYOffset;
-        const duration = 1000; // ms
-        let start = null;
-        
-        function ease(t) {
-            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-        }
-        
-        function step(timestamp) {
-            if (!start) start = timestamp;
-            const progress = timestamp - start;
-            const percentage = Math.min(progress / duration, 1);
-            const easePercentage = ease(percentage);
-            
-            window.scrollTo(0, startPosition * (1 - easePercentage));
-            
-            if (progress < duration) {
-                window.requestAnimationFrame(step);
+    if (scrollToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.style.opacity = '1';
+                scrollToTopBtn.style.visibility = 'visible';
+            } else {
+                scrollToTopBtn.style.opacity = '0';
+                scrollToTopBtn.style.visibility = 'hidden';
             }
-        }
+        });
         
-        window.requestAnimationFrame(step);
-    });
+        scrollToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Smooth scroll to top with custom easing
+            const startPosition = window.pageYOffset;
+            const duration = 1000; // ms
+            let start = null;
+            
+            function ease(t) {
+                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            }
+            
+            function step(timestamp) {
+                if (!start) start = timestamp;
+                const progress = timestamp - start;
+                const percentage = Math.min(progress / duration, 1);
+                const easePercentage = ease(percentage);
+                
+                window.scrollTo(0, startPosition * (1 - easePercentage));
+                
+                if (progress < duration) {
+                    window.requestAnimationFrame(step);
+                }
+            }
+            
+            window.requestAnimationFrame(step);
+        });
+    }
     
     // Subtle hover effects for buttons and cards
     // Country buttons with gentler effects
@@ -291,58 +312,72 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Add responsive navigation for mobile
-    const createMobileMenu = () => {
-        if (window.innerWidth <= 768) {
-            const nav = document.querySelector('nav ul');
-            const navItems = document.querySelectorAll('nav ul li');
-            
-            // Create hamburger menu if not already created
-            if (!document.querySelector('.hamburger-menu')) {
-                const hamburger = document.createElement('div');
-                hamburger.classList.add('hamburger-menu');
-                hamburger.innerHTML = '<span></span><span></span><span></span>';
-                
-                document.querySelector('header .container').appendChild(hamburger);
-                
-                hamburger.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                    nav.classList.toggle('active');
+    // Add lazy loading for images to improve performance
+    const lazyLoadImages = () => {
+        const images = document.querySelectorAll('img[data-src]');
+        
+        if (images.length > 0) {
+            if ('IntersectionObserver' in window) {
+                images.forEach(img => {
+                    const observer = new IntersectionObserver(entries => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                img.src = img.dataset.src;
+                                observer.disconnect();
+                            }
+                        });
+                    }, { rootMargin: '0px 0px 100px 0px' });
+                    
+                    observer.observe(img);
                 });
-                
-                // Hide menu when clicking a link
-                navItems.forEach(item => {
-                    item.addEventListener('click', function() {
-                        hamburger.classList.remove('active');
-                        nav.classList.remove('active');
-                    });
+            } else {
+                // Fallback for browsers that don't support IntersectionObserver
+                images.forEach(img => {
+                    img.src = img.dataset.src;
                 });
             }
         }
     };
     
-    createMobileMenu();
-    window.addEventListener('resize', createMobileMenu);
-    
-    // Add lazy loading for images to improve performance
-    const lazyLoadImages = () => {
-        const images = document.querySelectorAll('img[data-src]');
-        
-        images.forEach(img => {
-            const observer = new IntersectionObserver(entries => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        img.src = img.dataset.src;
-                        observer.disconnect();
-                    }
-                });
-            }, { rootMargin: '0px 0px 100px 0px' });
-            
-            observer.observe(img);
-        });
-    };
-    
     lazyLoadImages();
+    
+    // Handle subscription success notification
+    const subscriptionStatus = new URLSearchParams(window.location.search).get('subscription');
+    if (subscriptionStatus === 'success') {
+        // Create notification if not already imported through subscription.js
+        if (typeof showNotification !== 'function') {
+            // Basic notification implementation
+            const notification = document.createElement('div');
+            notification.className = 'notification success show';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Thank you for subscribing to our newsletter!</p>
+                    <button class="close-notification"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+            
+            // Close on button click
+            const closeBtn = notification.querySelector('.close-notification');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                });
+            }
+            
+            // Remove query parameter from URL
+            const newUrl = window.location.pathname + window.location.hash;
+            history.replaceState(null, '', newUrl);
+        }
+    }
     
     console.log('Bolakin Educational Consult website loaded successfully with enhanced animations!');
 });

@@ -485,7 +485,7 @@
                     <p>Fill out the form below to book a consultation with our education experts. We'll contact you to confirm your appointment.</p>
                 </div>
                 
-                <form id="appointmentForm" method="POST" action="{{ url_for('appointment') }}">
+                <form id="appointmentForm" method="POST" action="{{ url_for('main.appointment') }}">
                     <div class="form-group">
                         <label for="name" class="form-label">Full Name <span class="required">*</span></label>
                         <input type="text" id="name" name="name" class="form-control" required>

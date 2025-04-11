@@ -156,3 +156,77 @@ class User(db.Model, UserMixin):
         
     def __repr__(self):
         return f'<User {self.username}>'
+
+
+
+class BlogPost(db.Model):
+    """Blog posts for the website"""
+    __tablename__ = 'blog_posts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(200), unique=True, nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    excerpt = db.Column(db.String(300))
+    featured_image = db.Column(db.String(255))
+    is_published = db.Column(db.Boolean, default=True)
+    views_count = db.Column(db.Integer, default=0)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    author = db.relationship('User', backref='blog_posts')
+    categories = db.relationship('BlogCategory', secondary='blog_post_categories', backref='posts')
+    
+    def __repr__(self):
+        return f'<BlogPost {self.id}: {self.title}>'
+    
+    @property
+    def formatted_date(self):
+        """Return a formatted date string"""
+        return self.created_at.strftime('%B %d, %Y')
+    
+    def increment_view(self):
+        """Increment the view count for this post"""
+        self.views_count += 1
+        db.session.commit()
+
+
+class BlogCategory(db.Model):
+    """Categories for blog posts"""
+    __tablename__ = 'blog_categories'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.String(300))
+    
+    def __repr__(self):
+        return f'<BlogCategory {self.id}: {self.name}>'
+
+
+# Association table for many-to-many relationship between posts and categories
+blog_post_categories = db.Table('blog_post_categories',
+    db.Column('post_id', db.Integer, db.ForeignKey('blog_posts.id'), primary_key=True),
+    db.Column('category_id', db.Integer, db.ForeignKey('blog_categories.id'), primary_key=True)
+)
+
+
+class BlogComment(db.Model):
+    """Comments on blog posts"""
+    __tablename__ = 'blog_comments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    author_name = db.Column(db.String(100), nullable=False)
+    author_email = db.Column(db.String(120), nullable=False)
+    is_approved = db.Column(db.Boolean, default=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('blog_posts.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship
+    post = db.relationship('BlogPost', backref=db.backref('comments', lazy=True))
+    
+    def __repr__(self):
+        return f'<BlogComment {self.id} on post {self.post_id}>'
