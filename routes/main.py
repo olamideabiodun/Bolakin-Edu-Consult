@@ -11,6 +11,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
+import imghdr
+from flask import current_app
 
 main = Blueprint('main', __name__)
 
@@ -162,91 +164,6 @@ def unsubscribe():
     
     return render_template('unsubscribe.html', email=email, message='You have been successfully unsubscribed')
 
-
-@main.route('/submit-admission', methods=['POST'])
-def submit_admission():
-    """Handle admission application submission"""
-    if request.method == 'POST':
-        try:
-            # Get form data
-            full_name = request.form.get('fullName')
-            email = request.form.get('email')
-            phone = request.form.get('phone')
-            dob_str = request.form.get('dob')
-            gender = request.form.get('gender')
-            
-            prev_institution = request.form.get('prevInstitution')
-            qualification = request.form.get('qualification')
-            grad_year = request.form.get('gradYear')
-            gpa = request.form.get('gpa')
-            
-            course = request.form.get('course')
-            study_mode = request.form.get('studyMode')
-            campus = request.form.get('campus')
-            
-            agreement = request.form.get('agreement')
-            signature = request.form.get('signature')
-            
-            # Parse date of birth
-            try:
-                dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
-            except ValueError:
-                return jsonify({'success': False, 'message': 'Invalid date format for Date of Birth'})
-            
-            # Create new application in database
-            application = AdmissionApplication(
-                full_name=full_name,
-                email=email,
-                phone=phone,
-                dob=dob,
-                gender=gender,
-                prev_institution=prev_institution,
-                qualification=qualification,
-                grad_year=grad_year,
-                gpa=gpa,
-                course=course,
-                study_mode=study_mode,
-                campus=campus
-            )
-            
-            # Process file uploads and save to application record
-            uploads_folder = current_app.config['UPLOADS_FOLDER']
-            
-            # Create specific folder for this application
-            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-            applicant_folder = os.path.join(uploads_folder, f"{email}_{timestamp}")
-            os.makedirs(applicant_folder, exist_ok=True)
-            
-            # Handle file uploads
-            file_mappings = {
-                'idUpload': 'id_document',
-                'transcriptUpload': 'transcript',
-                'photoUpload': 'passport_photo'
-            }
-            
-            for file_key, db_field in file_mappings.items():
-                if file_key in request.files:
-                    file = request.files[file_key]
-                    if file.filename:
-                        filename = secure_filename(file.filename)
-                        file_path = os.path.join(applicant_folder, filename)
-                        file.save(file_path)
-                        setattr(application, db_field, file_path)
-            
-            # Save application to database
-            db.session.add(application)
-            db.session.commit()
-            
-            # Send email notification to admin
-            send_application_notification(application)
-            
-            return jsonify({'success': True, 'message': 'Application submitted successfully'})
-            
-        except Exception as e:
-            current_app.logger.error(f"Error processing admission form: {str(e)}")
-            return jsonify({'success': False, 'message': 'An error occurred while processing your application'})
-    
-    return jsonify({'success': False, 'message': 'Invalid request method'})
 
 
 # Helper functions for email sending
@@ -403,3 +320,181 @@ def send_application_notification(application):
         server.starttls()
         server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
         server.send_message(msg)
+
+
+
+def validate_file(file, allowed_extensions, max_size_mb=5):
+    """
+    Validate uploaded file
+    Args:
+        file: The uploaded file object
+        allowed_extensions: List of allowed file extensions (e.g. ['.pdf', '.jpg'])
+        max_size_mb: Maximum allowed file size in megabytes
+    
+    Returns:
+        tuple: (is_valid, message) - A boolean indicating if file is valid and an error message if not
+    """
+    # Check if file exists
+    if not file or file.filename == '':
+        return False, "No file selected"
+    
+    # Check file extension
+    filename = secure_filename(file.filename)
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in allowed_extensions:
+        return False, f"File type not allowed. Allowed types: {', '.join(allowed_extensions)}"
+    
+    # Check file size (max_size_mb in MB)
+    max_size_bytes = max_size_mb * 1024 * 1024
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)  # Reset file pointer
+    
+    if file_size > max_size_bytes:
+        return False, f"File size exceeds {max_size_mb}MB limit"
+    
+    # For images, verify the file is actually an image
+    if ext in ['.jpg', '.jpeg', '.png', '.gif']:
+        try:
+            # Read enough data to determine file type
+            header = file.read(512)
+            file.seek(0)  # Reset file pointer
+            format = imghdr.what(None, header)
+            if not format:
+                return False, "Invalid image file"
+        except Exception:
+            return False, "Could not verify image file"
+    
+    return True, "File is valid"
+
+def save_file(file, directory, filename=None):
+    """
+    Safely save an uploaded file
+    
+    Args:
+        file: The uploaded file object
+        directory: Directory to save the file in
+        filename: Optional custom filename (will use secure_filename of original if not provided)
+    
+    Returns:
+        str: Path to the saved file relative to the application
+    """
+    if not filename:
+        filename = secure_filename(file.filename)
+    else:
+        # Preserve extension
+        original_ext = os.path.splitext(secure_filename(file.filename))[1]
+        filename = secure_filename(filename) + original_ext
+    
+    # Ensure directory exists
+    os.makedirs(directory, exist_ok=True)
+    
+    # Generate full path
+    filepath = os.path.join(directory, filename)
+    
+    # Save file
+    file.save(filepath)
+    
+    # Return relative path from application root
+    uploads_folder = current_app.config['UPLOADS_FOLDER']
+    relative_path = os.path.relpath(filepath, uploads_folder)
+    
+    return os.path.join(uploads_folder, relative_path)
+
+# Use in the submit_admission route
+
+@main.route('/submit-admission', methods=['POST'])
+def submit_admission():
+    """Handle admission application submission"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            full_name = request.form.get('fullName')
+            email = request.form.get('email')
+            phone = request.form.get('phone')
+            dob_str = request.form.get('dob')
+            gender = request.form.get('gender')
+            
+            # Validate required fields
+            if not all([full_name, email, phone, dob_str, gender]):
+                return jsonify({'success': False, 'message': 'Please fill all required fields'})
+            
+            # Rest of form data
+            prev_institution = request.form.get('prevInstitution')
+            qualification = request.form.get('qualification')
+            grad_year = request.form.get('gradYear')
+            gpa = request.form.get('gpa')
+            course = request.form.get('course')
+            study_mode = request.form.get('studyMode')
+            campus = request.form.get('campus')
+            agreement = request.form.get('agreement')
+            
+            # Parse date of birth
+            try:
+                dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'success': False, 'message': 'Invalid date format for Date of Birth'})
+            
+            # Create new application in database
+            application = AdmissionApplication(
+                full_name=full_name,
+                email=email,
+                phone=phone,
+                dob=dob,
+                gender=gender,
+                prev_institution=prev_institution,
+                qualification=qualification,
+                grad_year=grad_year,
+                gpa=gpa,
+                course=course,
+                study_mode=study_mode,
+                campus=campus
+            )
+            
+            # Process file uploads and save to application record
+            uploads_folder = current_app.config['UPLOADS_FOLDER']
+            allowed_extensions = ['.pdf', '.jpg', '.jpeg', '.png']
+            
+            # Create specific folder for this application
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            applicant_folder = os.path.join(uploads_folder, f"{email}_{timestamp}")
+            
+            # Handle file uploads with validation
+            file_mappings = {
+                'idUpload': 'id_document',
+                'transcriptUpload': 'transcript',
+                'photoUpload': 'passport_photo'
+            }
+            
+            for file_key, db_field in file_mappings.items():
+                if file_key in request.files:
+                    file = request.files[file_key]
+                    if file.filename:
+                        # Validate file
+                        is_valid, message = validate_file(file, allowed_extensions, max_size_mb=5)
+                        if not is_valid:
+                            return jsonify({'success': False, 'message': f"{file_key}: {message}"})
+                        
+                        # Save file
+                        file_path = save_file(file, applicant_folder)
+                        setattr(application, db_field, file_path)
+            
+            # Save application to database
+            db.session.add(application)
+            db.session.commit()
+            
+            # Send email notification to admin
+            try:
+                send_application_notification(application)
+            except Exception as e:
+                current_app.logger.error(f"Error sending notification email: {str(e)}")
+                # Continue even if email fails - the application is saved
+            
+            return jsonify({'success': True, 'message': 'Application submitted successfully'})
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error processing admission form: {str(e)}")
+            return jsonify({'success': False, 'message': 'An error occurred while processing your application'})
+    
+    return jsonify({'success': False, 'message': 'Invalid request method'})

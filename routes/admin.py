@@ -414,7 +414,7 @@ def send_newsletter(id):
                 server.starttls()
                 server.login(smtp_username, smtp_password)
                 
-                # Send in batches
+                # Send in batches - FIX HERE: Use correct slice syntax for each batch ahhhhhh! fixed
                 for i in range(0, len(active_subscribers), batch_size):
                     batch = active_subscribers[i:i+batch_size]
                     
@@ -427,7 +427,8 @@ def send_newsletter(id):
                             content = content.replace('{{name}}', 'Valued Subscriber')
                         
                         # Add unsubscribe link
-                        unsubscribe_link = f"https://yourdomain.com/unsubscribe?email={subscriber.email}"
+                        site_url = current_app.config['SITE_URL']
+                        unsubscribe_link = f"{site_url}/unsubscribe?email={subscriber.email}"
                         content = content.replace('{{unsubscribe_link}}', unsubscribe_link)
                         
                         # Create and send email
@@ -466,6 +467,7 @@ def send_newsletter(id):
     return render_template('admin/send_newsletter.html', 
                           newsletter=newsletter,
                           active_subscriber_count=active_count)
+
 
 @admin.route('/newsletters/<int:id>/delete', methods=['POST'])
 @login_required
@@ -696,6 +698,7 @@ def delete_user(id):
     return redirect(url_for('admin.users'))
 
 # Scheduled task to send newsletters
+# Scheduled task to send newsletters
 def send_scheduled_newsletters():
     """Send all newsletters scheduled for now or earlier"""
     with current_app.app_context():
@@ -736,8 +739,7 @@ def send_scheduled_newsletters():
                     server.starttls()
                     server.login(smtp_username, smtp_password)
                     
-                    for i in range(0, len(active_subscribers), batch_size):
-                        batch = active_subscribers[i:]
+                    # FIX: Remove duplicate loop and correctly slice each batch
                     for i in range(0, len(active_subscribers), batch_size):
                         batch = active_subscribers[i:i+batch_size]
                         
@@ -749,8 +751,9 @@ def send_scheduled_newsletters():
                             else:
                                 content = content.replace('{{name}}', 'Valued Subscriber')
                             
-                            # Add unsubscribe link
-                            unsubscribe_link = f"https://yourdomain.com/unsubscribe?email={subscriber.email}"
+                            # Add unsubscribe link with configurable domain
+                            site_url = current_app.config.get('SITE_URL')
+                            unsubscribe_link = f"{site_url}/unsubscribe?email={subscriber.email}"
                             content = content.replace('{{unsubscribe_link}}', unsubscribe_link)
                             
                             # Create and send email

@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{ user.username if user else '' }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user else '' }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    {% if user %}New Password (leave blank to keep current){% else %}Password{% endif %}
+                </label>
+                <input type="password" class="form-control" id="password" name="new_password" {% if not user %}required{% endif %}>
+                {% if not user %}
+                <div class="form-text text-muted">Password must be at least 8 characters long.</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="is_admin" name="is_admin" {% if user and user.is_admin %}checked{% endif %}>
+                <label class="form-check-label" for="is_admin">Admin Privileges</label>
+                <div class="form-text text-muted">Admin users have full access to all system features.</div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if not user %}
+<div class="card shadow mt-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">User Security Guidelines</h6>
+    </div>
+    <div class="card-body">
+        <ul class="mb-0">
+            <li>Create unique usernames that are not easily guessable</li>
+            <li>Use strong passwords with a mix of letters, numbers, and special characters</li>
+            <li>Only grant admin privileges to trusted individuals</li>
+            <li>Regularly review user accounts and remove unused accounts</li>
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

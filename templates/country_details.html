@@ -1,0 +1,1055 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Country Details Page Styles */
+    .country-hero {
+        position: relative;
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .country-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1;
+    }
+    
+    .country-hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        color: white;
+        padding: 20px;
+        width: 100%;
+    }
+    
+    .country-hero-content h1 {
+        font-size: 48px;
+        color: #FF9933;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .country-hero-content .flag {
+        width: 60px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-right: 15px;
+        vertical-align: middle;
+        border: 2px solid white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .country-hero-content p {
+        font-size: 18px;
+        max-width: 800px;
+        margin: 0 auto;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .country-hero-content .apply-btn {
+        display: inline-block;
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: 30px;
+        margin-top: 20px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .country-hero-content .apply-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .country-hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    /* News ticker */
+    .news-ticker {
+        background-color: #FF9933;
+        color: white;
+        padding: 10px 0;
+        overflow: hidden;
+        position: relative;
+        transform: rotate(-2deg);
+        margin-top: -20px;
+        margin-bottom: -20px;
+        z-index: 10;
+    }
+    
+    .ticker-wrap {
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .ticker-content {
+        white-space: nowrap;
+        display: inline-block;
+        animation: ticker 30s linear infinite;
+        padding-left: 100%;
+    }
+
+    @keyframes ticker {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-100%);
+        }
+    }
+    
+    .ticker-content span {
+        padding: 0 40px;
+        font-weight: 600;
+        font-size: 16px;
+    }
+    
+    /* Quick Facts Section */
+    .quick-facts {
+        padding: 80px 0;
+        background-color: #f9f9f9;
+    }
+    
+    .facts-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+    }
+    
+    .fact-item {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .fact-item:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .fact-icon {
+        width: 60px;
+        height: 60px;
+        background-color: rgba(255, 153, 51, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: #FF9933;
+        font-size: 24px;
+    }
+    
+    .fact-title {
+        font-size: 14px;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .fact-value {
+        font-size: 18px;
+        color: #333;
+        font-weight: 600;
+    }
+    
+    /* Content Sections */
+    .country-section {
+        padding: 80px 0;
+    }
+    
+    .country-section:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    .country-section:nth-child(odd) {
+        background-color: #fff;
+    }
+    
+    .section-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    
+    .section-header h2 {
+        font-size: 32px;
+        color: #FF9933;
+        margin-bottom: 15px;
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .section-header h2::after {
+        content: '';
+        position: absolute;
+        width: 80px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .section-header p {
+        max-width: 800px;
+        margin: 0 auto;
+        color: #555;
+        font-size: 18px;
+    }
+    
+    /* Education System */
+    .education-system {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+    }
+    
+    .education-card {
+        flex: 1;
+        min-width: 300px;
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .education-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .education-card h3 {
+        font-size: 20px;
+        color: #FF9933;
+        margin-bottom: 15px;
+        position: relative;
+        padding-bottom: 15px;
+    }
+    
+    .education-card h3::after {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: 0;
+        left: 0;
+    }
+    
+    .education-card p {
+        color: #555;
+        font-size: 16px;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    
+    .education-card ul {
+        padding-left: 20px;
+        margin-bottom: 0;
+    }
+    
+    .education-card ul li {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    
+    /* Top Universities */
+    .universities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 30px;
+    }
+    
+    .university-card {
+        background-color: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .university-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .university-image {
+        height: 180px;
+        overflow: hidden;
+    }
+    
+    .university-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .university-card:hover .university-image img {
+        transform: scale(1.1);
+    }
+    
+    .university-content {
+        padding: 20px;
+    }
+    
+    .university-content h3 {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .university-content p {
+        color: #555;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    
+    .university-ranking {
+        display: inline-block;
+        background-color: rgba(255, 153, 51, 0.1);
+        color: #FF9933;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .university-link {
+        display: inline-block;
+        color: #FF9933;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .university-link:hover {
+        color: #FF8C00;
+    }
+    
+    /* Visa Requirements */
+    .visa-process {
+        text-align: center;
+    }
+    
+    .visa-steps {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 30px;
+    }
+    
+    .visa-step {
+        flex: 1;
+        min-width: 250px;
+        max-width: 300px;
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .visa-step:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .step-number {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        box-shadow: 0 5px 15px rgba(255, 153, 51, 0.3);
+    }
+    
+    .visa-step h3 {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 15px;
+        margin-top: 10px;
+    }
+    
+    .visa-step p {
+        color: #555;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    /* Testimonials */
+    .testimonials-slider {
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+    }
+    
+    .testimonial-card {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        text-align: center;
+    }
+    
+    .testimonial-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        overflow: hidden;
+        border: 3px solid #FF9933;
+    }
+    
+    .testimonial-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .testimonial-text {
+        font-size: 16px;
+        color: #555;
+        line-height: 1.8;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .testimonial-text::before {
+        content: '"';
+        position: absolute;
+        left: -15px;
+        top: -10px;
+        font-size: 50px;
+        color: rgba(255, 153, 51, 0.2);
+        font-family: Georgia, serif;
+    }
+    
+    .testimonial-author {
+        font-size: 18px;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .testimonial-program {
+        font-size: 14px;
+        color: #FF9933;
+    }
+    
+    /* Call to Action */
+    .cta-section {
+        padding: 80px 0;
+        background-color: #f9f9f9;
+        text-align: center;
+    }
+    
+    .cta-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .cta-container h2 {
+        font-size: 32px;
+        color: #FF9933;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .cta-container p {
+        color: #555;
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
+    
+    .cta-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .cta-btn {
+        display: inline-block;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 30px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .cta-btn.primary {
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+    }
+    
+    .cta-btn.secondary {
+        background-color: white;
+        color: #FF9933;
+        border: 2px solid #FF9933;
+    }
+    
+    .cta-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .country-hero {
+            height: 400px;
+        }
+        
+        .country-hero-content h1 {
+            font-size: 36px;
+        }
+        
+        .facts-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .education-card {
+            min-width: 100%;
+        }
+        
+        .university-card {
+            max-width: 350px;
+            margin: 0 auto;
+        }
+        
+        .visa-step {
+            min-width: 100%;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .country-hero {
+            height: 350px;
+        }
+        
+        .country-hero-content h1 {
+            font-size: 32px;
+        }
+        
+        .facts-container {
+            grid-template-columns: 1fr;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Country Hero -->
+<section class="country-hero">
+    <img src="{{ url_for('static', filename='images/countries/' ~ country|lower ~ '/hero.jpg') }}" alt="{{ country }} Cityscape" class="country-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+    <div class="country-hero-content">
+        <h1 data-aos="fade-up">
+            <img src="{{ url_for('static', filename='images/flags/' ~ country|lower ~ '.png') }}" alt="{{ country }} Flag" class="flag" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+            Study in {{ country }}
+        </h1>
+        <p data-aos="fade-up" data-aos-delay="200">Discover world-class education opportunities in {{ country }} with guidance from Bolakin Educational Consult. Your pathway to global success starts here.</p>
+        <a href="{{ url_for('appointment') }}" class="apply-btn" data-aos="fade-up" data-aos-delay="400">Apply Now</a>
+    </div>
+</section>
+
+<!-- News Ticker -->
+<div class="news-ticker">
+    <div class="ticker-wrap">
+        <div class="ticker-content">
+            <span>Educational Opportunities and Travel Updates</span>
+            <span>New Scholarship Programs Available</span>
+            <span>Upcoming University Application Deadlines</span>
+            <span>Educational Opportunities and Travel Updates</span>
+            <span>Fall 2025 Admissions Now Open</span>
+            <span>Visa Success Stories from Our Students</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Facts Section -->
+<section class="quick-facts">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Quick Facts</h2>
+            <p>Essential information about studying in {{ country }}</p>
+        </div>
+        
+        <div class="facts-container" data-aos="fade-up">
+            <div class="fact-item">
+                <div class="fact-icon">
+                    <i class="fas fa-language"></i>
+                </div>
+                <div class="fact-title">Official Language</div>
+                <div class="fact-value">
+                    {% if country == 'United Kingdom' %}
+                    English
+                    {% elif country == 'United States' %}
+                    English
+                    {% elif country == 'Canada' %}
+                    English, French
+                    {% elif country == 'Australia' %}
+                    English
+                    {% elif country == 'France' %}
+                    French
+                    {% elif country == 'Germany' %}
+                    German
+                    {% elif country == 'Netherlands' %}
+                    Dutch
+                    {% elif country == 'Switzerland' %}
+                    German, French, Italian
+                    {% else %}
+                    Various
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="fact-item">
+                <div class="fact-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="fact-title">Currency</div>
+                <div class="fact-value">
+                    {% if country == 'United Kingdom' %}
+                    British Pound (£)
+                    {% elif country == 'United States' %}
+                    US Dollar ($)
+                    {% elif country == 'Canada' %}
+                    Canadian Dollar (CAD)
+                    {% elif country == 'Australia' %}
+                    Australian Dollar (AUD)
+                    {% elif country == 'France' or country == 'Germany' or country == 'Netherlands' %}
+                    Euro (€)
+                    {% elif country == 'Switzerland' %}
+                    Swiss Franc (CHF)
+                    {% else %}
+                    Various
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="fact-item">
+                <div class="fact-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="fact-title">Top Universities</div>
+                <div class="fact-value">
+                    {% if country == 'United Kingdom' %}
+                    150+
+                    {% elif country == 'United States' %}
+                    4,000+
+                    {% elif country == 'Canada' %}
+                    100+
+                    {% elif country == 'Australia' %}
+                    43
+                    {% elif country == 'France' %}
+                    250+
+                    {% elif country == 'Germany' %}
+                    400+
+                    {% elif country == 'Netherlands' %}
+                    70+
+                    {% elif country == 'Switzerland' %}
+                    12
+                    {% else %}
+                    Multiple
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="fact-item">
+                <div class="fact-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="fact-title">Academic Year</div>
+                <div class="fact-value">
+                    {% if country == 'United Kingdom' %}
+                    Sept - June
+                    {% elif country == 'United States' %}
+                    Aug - May
+                    {% elif country == 'Canada' %}
+                    Sept - April
+                    {% elif country == 'Australia' %}
+                    Feb - Nov
+                    {% elif country == 'France' %}
+                    Sept - June
+                    {% elif country == 'Germany' %}
+                    Oct - July
+                    {% elif country == 'Netherlands' %}
+                    Sept - June
+                    {% elif country == 'Switzerland' %}
+                    Sept - June
+                    {% else %}
+                    Varies
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="fact-item">
+                <div class="fact-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="fact-title">Avg. Tuition (Int'l)</div>
+                <div class="fact-value">
+                    {% if country == 'United Kingdom' %}
+                    £10,000-£38,000
+                    {% elif country == 'United States' %}
+                    $20,000-$50,000
+                    {% elif country == 'Canada' %}
+                    CAD 20,000-30,000
+                    {% elif country == 'Australia' %}
+                    AUD 20,000-45,000
+                    {% elif country == 'France' %}
+                    €170-3,770
+                    {% elif country == 'Germany' %}
+                    Mostly Free
+                    {% elif country == 'Netherlands' %}
+                    €6,000-15,000
+                    {% elif country == 'Switzerland' %}
+                    CHF 1,000-7,000
+                    {% else %}
+                    Varies
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Education System Section -->
+<section class="country-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Education System</h2>
+            <p>Understanding the {{ country }} education structure and qualifications</p>
+        </div>
+        
+        <div class="education-system" data-aos="fade-up">
+            <div class="education-card">
+                <h3>Degree Structure</h3>
+                <p>
+                    {% if country == 'United Kingdom' %}
+                    The UK follows a three-tier degree system: Bachelor's (3-4 years), Master's (1-2 years), and Doctoral (3+ years). The academic year typically runs from September to June, divided into terms or semesters.
+                    {% elif country == 'United States' %}
+                    The US education system includes 4-year Bachelor's degrees, 1-2 year Master's programs, and Doctoral degrees (varying length). Most universities operate on a semester system (Fall and Spring).
+                    {% elif country == 'Canada' %}
+                    Canadian universities offer Bachelor's degrees (3-4 years), Master's degrees (1-2 years), and Doctoral degrees (4-7 years). The academic year generally runs from September to April.
+                    {% elif country == 'Australia' %}
+                    Australia follows a three-tier system with Bachelor's degrees (3 years), Master's degrees (1-2 years), and Doctoral degrees (3+ years). The academic year typically runs from February to November.
+                    {% else %}
+                    The education system in {{ country }} provides a structured pathway for academic advancement, from undergraduate to postgraduate studies, with various specializations available across disciplines.
+                    {% endif %}
+                </p>
+                <ul>
+                    <li><strong>Bachelor's Degree:</strong> 3-4 years</li>
+                    <li><strong>Master's Degree:</strong> 1-2 years</li>
+                    <li><strong>PhD/Doctoral:</strong> 3+ years</li>
+                </ul>
+            </div>
+            
+            <div class="education-card">
+                <h3>Admission Requirements</h3>
+                <p>
+                    {% if country == 'United Kingdom' %}
+                    For undergraduate studies, international students need qualifications equivalent to A-Levels, plus English proficiency (IELTS/TOEFL). Postgraduate programs require a relevant Bachelor's degree with good grades.
+                    {% elif country == 'United States' %}
+                    US universities require a high school diploma or equivalent for undergraduate studies, plus SAT/ACT scores. Graduate programs require a Bachelor's degree, GRE/GMAT scores, and strong academics.
+                    {% elif country == 'Canada' %}
+                    Canadian institutions require a high school diploma for undergraduate admission and a Bachelor's degree for graduate programs, along with proof of English/French proficiency.
+                    {% elif country == 'Australia' %}
+                    Australian universities require completion of an equivalent to Australian Year 12 for undergraduate programs, and a Bachelor's degree for postgraduate studies.
+                    {% else %}
+                    Admission to educational institutions in {{ country }} requires meeting specific academic qualifications, demonstrating language proficiency, and completing the application process well before deadlines.
+                    {% endif %}
+                </p>
+                <ul>
+                    <li><strong>Academic Transcripts:</strong> Previous qualifications</li>
+                    <li><strong>Language Proficiency:</strong> IELTS/TOEFL/Other</li>
+                    <li><strong>Standardized Tests:</strong> May be required for certain programs</li>
+                    <li><strong>Application Essays/SOP:</strong> For most applications</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Top Universities Section -->
+<section class="country-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Top Universities</h2>
+            <p>Explore prestigious institutions in {{ country }}</p>
+        </div>
+        
+        <div class="universities-grid" data-aos="fade-up">
+            {% if country == 'United Kingdom' %}
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/oxford.jpg') }}" alt="University of Oxford" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">QS Ranking: #2</div>
+                    <h3>University of Oxford</h3>
+                    <p>One of the oldest and most prestigious universities in the world, with excellence across disciplines.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/cambridge.jpg') }}" alt="University of Cambridge" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">QS Ranking: #3</div>
+                    <h3>University of Cambridge</h3>
+                    <p>World-renowned for research excellence and teaching quality across many academic fields.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/imperial.jpg') }}" alt="Imperial College London" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">QS Ranking: #6</div>
+                    <h3>Imperial College London</h3>
+                    <p>Specializing in science, engineering, medicine, and business with world-class facilities.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            {% elif country == 'United States' %}
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/harvard.jpg') }}" alt="Harvard University" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">QS Ranking: #5</div>
+                    <h3>Harvard University</h3>
+                    <p>Oldest institution of higher education in the US with excellence across numerous fields.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/mit.jpg') }}" alt="MIT" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">QS Ranking: #1</div>
+                    <h3>Massachusetts Institute of Technology</h3>
+                    <p>Leading university focusing on science and technology education and research.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/stanford.jpg') }}" alt="Stanford University" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">QS Ranking: #3</div>
+                    <h3>Stanford University</h3>
+                    <p>World-class teaching, research and entrepreneurial atmosphere in the heart of Silicon Valley.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            {% else %}
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/placeholder1.jpg') }}" alt="Top University" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">Top Ranked</div>
+                    <h3>Premier University</h3>
+                    <p>A leading institution offering world-class education across multiple disciplines.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/placeholder2.jpg') }}" alt="Top University" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">Top Ranked</div>
+                    <h3>National University</h3>
+                    <p>Renowned for its academic excellence and research facilities.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            
+            <div class="university-card">
+                <div class="university-image">
+                    <img src="{{ url_for('static', filename='images/universities/placeholder3.jpg') }}" alt="Top University" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="university-content">
+                    <div class="university-ranking">Top Ranked</div>
+                    <h3>International Institute</h3>
+                    <p>Leading center for global education with strong industry connections.</p>
+                    <a href="#" class="university-link">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Visa Requirements Section -->
+<section class="country-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Visa Requirements</h2>
+            <p>Understanding the process to obtain a student visa for {{ country }}</p>
+        </div>
+        
+        <div class="visa-process" data-aos="fade-up">
+            <div class="visa-steps">
+                <div class="visa-step">
+                    <div class="step-number">1</div>
+                    <h3>University Acceptance</h3>
+                    <p>Secure an admission offer from a recognized educational institution in {{ country }} before beginning the visa application process.</p>
+                </div>
+                
+                <div class="visa-step">
+                    <div class="step-number">2</div>
+                    <h3>Gather Documentation</h3>
+                    <p>Prepare necessary documents including passport, admission letter, financial proof, language proficiency, and visa application forms.</p>
+                </div>
+                
+                <div class="visa-step">
+                    <div class="step-number">3</div>
+                    <h3>Submit Application</h3>
+                    <p>Complete the visa application online or at the nearest embassy/consulate, pay the visa fee, and schedule a visa interview if required.</p>
+                </div>
+                
+                <div class="visa-step">
+                    <div class="step-number">4</div>
+                    <h3>Visa Interview</h3>
+                    <p>Attend the visa interview with all required documents. Be prepared to discuss your study plans, financial situation, and ties to your home country.</p>
+                </div>
+                
+                <div class="visa-step">
+                    <div class="step-number">5</div>
+                    <h3>Visa Decision</h3>
+                    <p>After processing, you'll receive the visa decision. If approved, prepare for travel and pre-departure requirements for {{ country }}.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="country-section">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Student Testimonials</h2>
+            <p>Hear from our students studying in {{ country }}</p>
+        </div>
+        
+        <div class="testimonials-slider" data-aos="fade-up">
+            <div class="testimonial-card">
+                <div class="testimonial-avatar">
+                    <img src="{{ url_for('static', filename='images/testimonials/student1.jpg') }}" alt="Student" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <p class="testimonial-text">Studying in {{ country }} has been a life-changing experience. The quality of education is exceptional, and I've made friends from all over the world. Bolakin Educational Consult made the application process smooth and stress-free.</p>
+                <div class="testimonial-author">Adebayo Johnson</div>
+                <div class="testimonial-program">MSc International Business</div>
+            </div>
+            
+            <div class="testimonial-card">
+                <div class="testimonial-avatar">
+                    <img src="{{ url_for('static', filename='images/testimonials/student2.jpg') }}" alt="Student" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <p class="testimonial-text">I couldn't have navigated the complex visa process without Bolakin's help. Their step-by-step guidance ensured I had all the right documents and was well-prepared for my interview. Now I'm living my dream of studying in {{ country }}!</p>
+                <div class="testimonial-author">Chinwe Okafor</div>
+                <div class="testimonial-program">BSc Computer Science</div>
+            </div>
+            
+            <div class="testimonial-card">
+                <div class="testimonial-avatar">
+                    <img src="{{ url_for('static', filename='images/testimonials/student3.jpg') }}" alt="Student" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <p class="testimonial-text">The scholarship assistance from Bolakin was invaluable. They helped me identify and apply for scholarships I didn't even know existed. Thanks to their expertise, I'm now studying at a top university in {{ country }} with substantial financial support.</p>
+                <div class="testimonial-author">Mohammed Ibrahim</div>
+                <div class="testimonial-program">PhD Engineering</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-container" data-aos="fade-up">
+            <h2>Begin Your {{ country }} Education Journey Today</h2>
+            <p>Let our experienced team guide you through every step of the process, from university selection to visa approval.</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('appointment') }}" class="cta-btn primary">Book a Consultation</a>
+                <a href="#" class="cta-btn secondary">Download {{ country }} Guide</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include 'components/newsletter.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+<script>
+    $(document).ready(function(){
+        // Initialize Testimonials Slider
+        $('.testimonials-slider').slick({
+            dots: true,
+            infinite: true,
+            speed: 500,
+            slidesToShow: 1,
+            adaptiveHeight: true,
+            autoplay: true,
+            autoplaySpeed: 5000
+        });
+    });
+</script>
+{% endblock %}

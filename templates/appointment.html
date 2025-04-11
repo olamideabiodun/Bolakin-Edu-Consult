@@ -1,0 +1,704 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Appointment Page Styles */
+    .appointment-hero {
+        background-color: #000;
+        position: relative;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .appointment-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1;
+    }
+    
+    .appointment-hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        color: white;
+        padding: 20px;
+    }
+    
+    .appointment-hero-content h1 {
+        font-size: 40px;
+        color: #FF9933;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .appointment-hero-content p {
+        font-size: 18px;
+        max-width: 800px;
+        margin: 0 auto;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .appointment-hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.4;
+    }
+    
+    /* News ticker */
+    .news-ticker {
+        background-color: #FF9933;
+        color: white;
+        padding: 10px 0;
+        overflow: hidden;
+        position: relative;
+        transform: rotate(-2deg);
+        margin-top: -20px;
+        margin-bottom: -20px;
+        z-index: 10;
+    }
+    
+    .ticker-wrap {
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .ticker-content {
+        white-space: nowrap;
+        display: inline-block;
+        animation: ticker 30s linear infinite;
+        padding-left: 100%;
+    }
+
+    @keyframes ticker {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-100%);
+        }
+    }
+    
+    .ticker-content span {
+        padding: 0 40px;
+        font-weight: 600;
+        font-size: 16px;
+    }
+    
+    /* Appointment Form Section */
+    .appointment-section {
+        padding: 80px 0;
+        background-color: #f9f9f9;
+        position: relative;
+    }
+    
+    .appointment-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 153, 51, 0.05);
+        border-radius: 50%;
+        z-index: 0;
+    }
+    
+    .appointment-section::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 153, 51, 0.05);
+        border-radius: 50%;
+        z-index: 0;
+    }
+    
+    .appointment-container {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 40px;
+    }
+    
+    .appointment-form-container {
+        flex: 1;
+        min-width: 300px;
+        background-color: white;
+        border-radius: 15px;
+        padding: 40px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .appointment-info {
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    .appointment-form-header {
+        margin-bottom: 30px;
+    }
+    
+    .appointment-form-header h2 {
+        font-size: 28px;
+        color: #FF9933;
+        margin-bottom: 15px;
+        position: relative;
+        padding-bottom: 15px;
+    }
+    
+    .appointment-form-header h2::after {
+        content: '';
+        position: absolute;
+        width: 60px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: 0;
+        left: 0;
+    }
+    
+    .appointment-form-header p {
+        color: #555;
+        font-size: 16px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        color: #333;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #FF9933;
+        box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.2);
+        background-color: #fff;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        color: #333;
+        font-size: 16px;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        background-size: 16px;
+        padding-right: 40px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #FF9933;
+        box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.2);
+        background-color: #fff;
+    }
+    
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .required {
+        color: #e74c3c;
+        margin-left: 2px;
+    }
+    
+    .submit-btn {
+        display: inline-block;
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+    }
+    
+    .submit-btn:hover {
+        background: linear-gradient(45deg, #FF9933, #FF8C00);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);
+    }
+    
+    /* Info Cards */
+    .info-card {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .info-card h3 {
+        font-size: 20px;
+        color: #FF9933;
+        margin-bottom: 15px;
+        position: relative;
+        padding-bottom: 15px;
+    }
+    
+    .info-card h3::after {
+        content: '';
+        position: absolute;
+        width: 40px;
+        height: 2px;
+        background-color: #FF9933;
+        bottom: 0;
+        left: 0;
+    }
+    
+    .info-card p {
+        color: #555;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255, 153, 51, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        color: #FF9933;
+        font-size: 18px;
+    }
+    
+    .info-text h4 {
+        font-size: 16px;
+        margin-bottom: 5px;
+        color: #333;
+    }
+    
+    .info-text p {
+        font-size: 14px;
+        color: #555;
+        margin: 0;
+    }
+    
+    .info-text a {
+        color: #FF9933;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .info-text a:hover {
+        color: #FF8C00;
+        text-decoration: underline;
+    }
+    
+    /* FAQ Section */
+    .faq-section {
+        padding: 80px 0;
+        background-color: #fff;
+    }
+    
+    .faq-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    
+    .faq-header h2 {
+        font-size: 32px;
+        color: #FF9933;
+        margin-bottom: 15px;
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .faq-header h2::after {
+        content: '';
+        position: absolute;
+        width: 80px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .faq-header p {
+        max-width: 800px;
+        margin: 0 auto;
+        color: #555;
+        font-size: 18px;
+    }
+    
+    .faq-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+        gap: 20px;
+    }
+    
+    .faq-item {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .faq-item:hover {
+        background-color: rgba(255, 153, 51, 0.05);
+    }
+    
+    .faq-question {
+        font-size: 18px;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .faq-question i {
+        color: #FF9933;
+        transition: transform 0.3s ease;
+    }
+    
+    .faq-answer {
+        display: none;
+        color: #555;
+        padding-top: 10px;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        margin-top: 10px;
+    }
+    
+    .faq-item.active .faq-question i {
+        transform: rotate(180deg);
+    }
+    
+    .faq-item.active .faq-answer {
+        display: block;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .appointment-hero {
+            height: 350px;
+        }
+        
+        .appointment-hero-content h1 {
+            font-size: 32px;
+        }
+        
+        .appointment-form-container,
+        .appointment-info {
+            min-width: 100%;
+        }
+        
+        .faq-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Appointment Hero -->
+<section class="appointment-hero">
+    <img src="{{ url_for('static', filename='images/appointment/hero-bg.jpg') }}" alt="Appointment Background" class="appointment-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+    <div class="appointment-hero-content">
+        <h1 data-aos="fade-up">Book Your Consultation</h1>
+        <p data-aos="fade-up" data-aos-delay="200">Schedule a personalized consultation with our education experts to discuss your study abroad goals and opportunities.</p>
+    </div>
+</section>
+
+<!-- News Ticker -->
+<div class="news-ticker">
+    <div class="ticker-wrap">
+        <div class="ticker-content">
+            <span>Educational Opportunities and Travel Updates</span>
+            <span>New Scholarship Programs Available</span>
+            <span>Upcoming University Application Deadlines</span>
+            <span>Educational Opportunities and Travel Updates</span>
+            <span>Fall 2025 Admissions Now Open</span>
+            <span>Visa Success Stories from Our Students</span>
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Form Section -->
+<section class="appointment-section">
+    <div class="container">
+        <div class="appointment-container">
+            <div class="appointment-form-container" data-aos="fade-right">
+                <div class="appointment-form-header">
+                    <h2>Schedule an Appointment</h2>
+                    <p>Fill out the form below to book a consultation with our education experts. We'll contact you to confirm your appointment.</p>
+                </div>
+                
+                <form id="appointmentForm" method="POST" action="{{ url_for('appointment') }}">
+                    <div class="form-group">
+                        <label for="name" class="form-label">Full Name <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="preferred_country" class="form-label">Preferred Study Destination</label>
+                        <select id="preferred_country" name="preferred_country" class="form-select">
+                            <option value="" selected disabled>Select a country</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="United States">United States</option>
+                            <option value="Canada">Canada</option>
+                            <option value="Australia">Australia</option>
+                            <option value="France">France</option>
+                            <option value="Germany">Germany</option>
+                            <option value="Ireland">Ireland</option>
+                            <option value="Netherlands">Netherlands</option>
+                            <option value="Poland">Poland</option>
+                            <option value="Switzerland">Switzerland</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="consultation_type" class="form-label">Consultation Type <span class="required">*</span></label>
+                        <select id="consultation_type" name="consultation_type" class="form-select" required>
+                            <option value="" selected disabled>Select consultation type</option>
+                            <option value="General Inquiry">General Inquiry</option>
+                            <option value="University Selection">University Selection</option>
+                            <option value="Course Selection">Course Selection</option>
+                            <option value="Visa Guidance">Visa Guidance</option>
+                            <option value="Scholarship Information">Scholarship Information</option>
+                            <option value="Application Process">Application Process</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message" class="form-label">Your Message</label>
+                        <textarea id="message" name="message" class="form-control form-textarea" placeholder="Tell us more about your study abroad goals and questions..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Book Appointment</button>
+                </form>
+            </div>
+            
+            <div class="appointment-info" data-aos="fade-left">
+                <div class="info-card">
+                    <h3>Why Book a Consultation?</h3>
+                    <p>Our personalized consultations offer numerous benefits to help you navigate the complex process of studying abroad:</p>
+                    <ul>
+                        <li>Personalized guidance tailored to your academic background and career goals</li>
+                        <li>Expert advice on university and course selection</li>
+                        <li>Information on available scholarships and financial aid</li>
+                        <li>Step-by-step assistance with the application process</li>
+                        <li>Visa application guidance and preparation</li>
+                        <li>Pre-departure orientation and accommodation support</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h3>Contact Information</h3>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="info-text">
+                            <h4>Office Address</h4>
+                            <p>123 Education Street, Victoria Island, Lagos, Nigeria</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div class="info-text">
+                            <h4>Phone</h4>
+                            <p><a href="tel:+2349013509464">+234 901 350 9464</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="info-text">
+                            <h4>Email</h4>
+                            <p><a href="mailto:bolakineducationalconsult@gmail.com">bolakineducationalconsult@gmail.com</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="far fa-clock"></i>
+                        </div>
+                        <div class="info-text">
+                            <h4>Office Hours</h4>
+                            <p>Monday - Friday: 9:00 AM - 5:00 PM<br>Saturday: 10:00 AM - 2:00 PM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq-section">
+    <div class="container">
+        <div class="faq-header" data-aos="fade-up">
+            <h2>Frequently Asked Questions</h2>
+            <p>Find answers to some of the most common questions about our consultation services.</p>
+        </div>
+        
+        <div class="faq-grid" data-aos="fade-up">
+            <div class="faq-item">
+                <div class="faq-question">
+                    How long does the consultation process take? <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Our standard consultation typically lasts 45-60 minutes. However, we understand that each student's needs are unique, and we're flexible to extend the session if needed to ensure all your questions are addressed.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    Is there a fee for the initial consultation? <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    We offer a complimentary initial consultation to understand your needs and provide general guidance. Subsequent specialized consultations or service packages may have associated fees, which will be clearly communicated beforehand.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    What should I prepare for the consultation? <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    To make the most of your consultation, please have your academic transcripts, certificates, CV/resume, passport, and any standardized test scores (if available) ready. Also, prepare questions and be clear about your academic and career goals.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    Can I change my appointment time after booking? <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Yes, you can reschedule your appointment up to 24 hours before the scheduled time. Please contact our office via email or phone to request a change in your appointment time.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    Do you offer virtual consultations? <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Yes, we offer both in-person and virtual consultations via Zoom, Google Meet, or WhatsApp video call. Virtual consultations provide the same level of personalized guidance and are especially convenient for international clients.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    What happens after the consultation? <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    After the consultation, we'll provide you with a summary of our discussion and recommended next steps. If you decide to proceed with our services, we'll outline a personalized plan and guide you through each stage of the application process.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include 'components/newsletter.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function(){
+        // Form validation
+        $('#appointmentForm').submit(function(e) {
+            const requiredFields = $(this).find('[required]');
+            let valid = true;
+            
+            requiredFields.each(function() {
+                if (!$(this).val()) {
+                    valid = false;
+                    $(this).addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+        
+        // FAQ accordion
+        $('.faq-question').click(function() {
+            $(this).parent().toggleClass('active');
+            $(this).parent().siblings().removeClass('active');
+        });
+    });
+</script>
+{% endblock %}

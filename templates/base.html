@@ -34,11 +34,12 @@
             </div>
             <nav>
                 <ul class="nav-links">
-                    <li><a href="{{ url_for('home') }}" class="animate__animated animate__fadeIn">Home</a></li>
-                    <li><a href="{{ url_for('blog') }}" class="animate__animated animate__fadeIn">Blog</a></li>
-                    <li><a href="{{ url_for('gallery') }}" class="animate__animated animate__fadeIn">Gallery & Review</a></li>
-                    <li><a href="{{ url_for('about') }}" class="animate__animated animate__fadeIn">About</a></li>
-                    <li><a href="{{ url_for('appointment') }}" class="book-btn animate__animated animate__fadeIn">Book Appointment</a></li>
+                    <!-- Fix: Change from 'home' to 'main.index' to match route function name -->
+                    <li><a href="{{ url_for('main.index') }}" class="animate__animated animate__fadeIn">Home</a></li>
+                    <li><a href="{{ url_for('main.blog') }}" class="animate__animated animate__fadeIn">Blog</a></li>
+                    <li><a href="{{ url_for('main.gallery') }}" class="animate__animated animate__fadeIn">Gallery & Review</a></li>
+                    <li><a href="{{ url_for('main.about') }}" class="animate__animated animate__fadeIn">About</a></li>
+                    <li><a href="{{ url_for('main.appointment') }}" class="book-btn animate__animated animate__fadeIn">Book Appointment</a></li>
                 </ul>
             </nav>
             <!-- Mobile menu toggle will be added by JavaScript -->
@@ -70,7 +71,7 @@
     </div>
 
     <div class="whatsapp-button">
-        <a href="https://wa.me/yournumber" target="_blank">
+        <a href="https://wa.me/2349013509464" target="_blank">
             <img src="{{ url_for('static', filename='images/whatsapp-icon.png') }}" alt="WhatsApp">
         </a>
     </div>

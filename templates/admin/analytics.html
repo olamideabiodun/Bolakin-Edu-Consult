@@ -1,0 +1,302 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block header_title %}Website Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- Date Range Selector -->
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Date Range</h6>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('admin.analytics') }}" class="row g-3 align-items-center">
+                    <div class="col-md-4">
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('admin.analytics', days=7) }}" class="btn {% if days == 7 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 7 Days</a>
+                            <a href="{{ url_for('admin.analytics', days=30) }}" class="btn {% if days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 30 Days</a>
+                            <a href="{{ url_for('admin.analytics', days=90) }}" class="btn {% if days == 90 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 90 Days</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                            </div>
+                            <div class="col-md-5">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                            </div>
+                            <div class="col-md-2 align-self-end">
+                                <button type="submit" class="btn btn-primary w-100">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Visits</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_visits }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Unique Visitors</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ unique_visitors }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Avg. Daily Visits</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% if visit_counts|length > 0 %}
+                                {{ (visit_counts|sum / visit_counts|length)|round|int }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Time Period</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ days }} Days</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Traffic Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Daily Traffic</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Pages -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Top Pages</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Page</th>
+                                <th>Views</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for page in top_pages %}
+                            <tr>
+                                <td>{{ page.page }}</td>
+                                <td>{{ page.count }}</td>
+                                <td>
+                                    {% if total_visits > 0 %}
+                                    {{ ((page.count / total_visits) * 100)|round(1) }}%
+                                    {% else %}
+                                    0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center">No data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Referrers -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Top Referrers</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Visits</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referrer in top_referrers %}
+                            <tr>
+                                <td>
+                                    {% if referrer.referrer %}
+                                    {{ referrer.referrer|truncate(50) }}
+                                    {% else %}
+                                    Direct / None
+                                    {% endif %}
+                                </td>
+                                <td>{{ referrer.count }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center">No data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional metrics can be added here -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Analytics Help</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h5>Understanding Your Data</h5>
+                    <p>This dashboard provides insights into your website's performance:</p>
+                    <ul>
+                        <li><strong>Total Visits:</strong> The total number of page views during the selected time period.</li>
+                        <li><strong>Unique Visitors:</strong> Approximate number of different people who visited your site.</li>
+                        <li><strong>Daily Traffic:</strong> Shows visit patterns over time.</li>
+                        <li><strong>Top Pages:</strong> Most popular pages on your website.</li>
+                        <li><strong>Referrers:</strong> Sources that drive traffic to your site.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h5>Tips for Using Analytics</h5>
+                    <ul>
+                        <li>Compare different time periods to identify trends</li>
+                        <li>Focus on pages with high traffic to optimize conversion</li>
+                        <li>Pay attention to referral sources to improve marketing efforts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Traffic Chart
+    var ctx = document.getElementById('trafficChart').getContext('2d');
+    var trafficChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ visit_dates|safe }},
+            datasets: [{
+                label: 'Daily Visits',
+                data: {{ visit_counts|safe }},
+                backgroundColor: 'rgba(255, 153, 51, 0.2)',
+                borderColor: 'rgba(255, 153, 51, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(255, 153, 51, 1)',
+                pointBorderColor: '#fff',
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'rgba(255, 153, 51, 1)',
+                pointHoverBorderColor: '#fff',
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + ' visits';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .about-hero {
+        padding: 100px 0 80px;
+        text-align: center;
+        background-color: #f9f9f9;
+        position: relative;
+    }
+    
+    .about-hero::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: linear-gradient(135deg, rgba(255,153,51,0.05) 0%, rgba(255,255,255,1) 100%);
+        z-index: 0;
+    }
+    
+    .about-hero .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .about-hero h1 {
+        font-size: 36px;
+        color: #FF9933;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .about-hero p {
+        max-width: 800px;
+        margin: 0 auto;
+        font-size: 18px;
+        color: #555;
+        line-height: 1.9;
+    }
+    
+    .about-section {
+        padding: 80px 0;
+    }
+    
+    .about-section:nth-child(odd) {
+        background-color: #fff;
+    }
+    
+    .about-section:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    .about-image {
+        width: 100%;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .about-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition: transform 0.5s ease;
+    }
+    
+    .about-image:hover img {
+        transform: scale(1.03);
+    }
+    
+    .about-content {
+        padding: 30px;
+    }
+    
+    .about-content h2 {
+        color: #FF9933;
+        font-size: 28px;
+        margin-bottom: 20px;
+        position: relative;
+        font-weight: 600;
+    }
+    
+    .about-content h2::after {
+        content: '';
+        position: absolute;
+        width: 60px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: -10px;
+        left: 0;
+    }
+    
+    .about-content p {
+        color: #555;
+        font-size: 16px;
+        line-height: 1.9;
+        margin-bottom: 15px;
+    }
+    
+    .about-content ul {
+        padding-left: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .about-content ul li {
+        margin-bottom: 10px;
+        color: #555;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+    
+    .team-section {
+        padding: 80px 0;
+        background-color: #fff;
+    }
+    
+    .team-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    
+    .team-header h2 {
+        color: #FF9933;
+        font-size: 32px;
+        margin-bottom: 20px;
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .team-header h2::after {
+        content: '';
+        position: absolute;
+        width: 80px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .team-header p {
+        max-width: 800px;
+        margin: 0 auto;
+        color: #555;
+        font-size: 18px;
+        line-height: 1.8;
+    }
+    
+    .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 30px;
+    }
+    
+    .team-member {
+        background-color: #f9f9f9;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .team-member:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .member-image {
+        height: 280px;
+        overflow: hidden;
+    }
+    
+    .member-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .team-member:hover .member-image img {
+        transform: scale(1.1);
+    }
+    
+    .member-details {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .member-name {
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    .member-position {
+        color: #FF9933;
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    
+    .member-bio {
+        color: #555;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .member-social {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .member-social a {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #fff;
+        color: #FF9933;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .member-social a:hover {
+        background-color: #FF9933;
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .cta-section {
+        padding: 80px 0;
+        text-align: center;
+        background-color: #f9f9f9;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background-color: rgba(255, 153, 51, 0.05);
+        top: -150px;
+        right: -150px;
+    }
+    
+    .cta-section::after {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background-color: rgba(255, 153, 51, 0.05);
+        bottom: -150px;
+        left: -150px;
+    }
+    
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .cta-content h2 {
+        color: #FF9933;
+        font-size: 32px;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .cta-content p {
+        max-width: 800px;
+        margin: 0 auto 30px;
+        color: #555;
+        font-size: 18px;
+        line-height: 1.8;
+    }
+    
+    .cta-button {
+        display: inline-block;
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+        padding: 15px 40px;
+        font-size: 18px;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 50px;
+        box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(255, 153, 51, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .about-section .row {
+            flex-direction: column-reverse;
+        }
+        
+        .about-section:nth-child(odd) .row {
+            flex-direction: column;
+        }
+        
+        .about-content {
+            padding: 30px 0;
+        }
+        
+        .about-image {
+            margin-bottom: 30px;
+        }
+        
+        .team-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="about-hero">
+    <div class="container">
+        <h1 data-aos="fade-up">About Bolakin Educational Consult</h1>
+        <p data-aos="fade-up" data-aos-delay="200">Founded with a vision to provide seamless educational consulting services, Bolakin Educational Consult has helped thousands of students achieve their dream of studying abroad at prestigious institutions worldwide.</p>
+    </div>
+</section>
+
+<section class="about-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <div class="about-image">
+                    <img src="{{ url_for('static', filename='images/about/our-story.jpg') }}" alt="Our Story" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="about-content">
+                    <h2>Our Story</h2>
+                    <p>Bolakin Educational Consult was established in 2015 with a simple mission: to bridge the gap between aspiring students and quality international education. What started as a small consulting office has now grown into a trusted name in educational consulting services.</p>
+                    <p>Our founder, Mrs. Bolakin, envisioned a service that would provide personalized guidance to students navigating the complex process of studying abroad. With her experience in international education and a passion for helping students, she built a team of dedicated professionals who share her vision.</p>
+                    <p>Today, we pride ourselves on our track record of successful placements in top universities across the globe, and our commitment to excellence remains as strong as ever.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="about-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <div class="about-content">
+                    <h2>Our Mission & Values</h2>
+                    <p>At Bolakin Educational Consult, our mission is to empower students to achieve their academic and career goals through quality international education. We are guided by the following core values:</p>
+                    <ul>
+                        <li><strong>Integrity:</strong> We operate with honesty and transparency in all our dealings.</li>
+                        <li><strong>Excellence:</strong> We strive for excellence in every aspect of our service.</li>
+                        <li><strong>Student-Centered:</strong> We place the needs and aspirations of our students at the center of everything we do.</li>
+                        <li><strong>Innovation:</strong> We continuously seek innovative solutions to meet the evolving needs of our clients.</li>
+                        <li><strong>Diversity:</strong> We embrace and celebrate diversity in all its forms.</li>
+                    </ul>
+                    <p>These values have shaped our approach and have been instrumental in our success story.</p>
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="about-image">
+                    <img src="{{ url_for('static', filename='images/about/mission.jpg') }}" alt="Our Mission" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="about-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <div class="about-image">
+                    <img src="{{ url_for('static', filename='images/about/services.jpg') }}" alt="Our Services" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="about-content">
+                    <h2>What We Offer</h2>
+                    <p>We offer a comprehensive range of services designed to simplify the process of studying abroad:</p>
+                    <ul>
+                        <li><strong>Educational Counseling:</strong> Personalized guidance to help students choose the right course and institution based on their academic background, career goals, and budget.</li>
+                        <li><strong>Application Processing:</strong> Assistance with preparing and submitting applications to international universities.</li>
+                        <li><strong>Visa Guidance:</strong> Expert advice and support for visa application processes.</li>
+                        <li><strong>Scholarship Assistance:</strong> Help in identifying and applying for scholarship opportunities.</li>
+                        <li><strong>Pre-Departure Orientation:</strong> Comprehensive briefing to prepare students for life abroad.</li>
+                        <li><strong>Accommodation Assistance:</strong> Support in finding suitable accommodation options.</li>
+                    </ul>
+                    <p>Our holistic approach ensures that students are well-prepared for their international education journey.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="team-section">
+    <div class="container">
+        <div class="team-header" data-aos="fade-up">
+            <h2>Meet Our Team</h2>
+            <p>Our success is built on the expertise and dedication of our team. Get to know the professionals who work tirelessly to make your educational dreams a reality.</p>
+        </div>
+        
+        <div class="team-grid">
+            <div class="team-member" data-aos="fade-up" data-aos-delay="100">
+                <div class="member-image">
+                    <img src="{{ url_for('static', filename='images/team/team1.jpg') }}" alt="Team Member" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="member-details">
+                    <h3 class="member-name">Adeboye Olamide</h3>
+                    <p class="member-position">Founder & CEO</p>
+                    <p class="member-bio">With over 15 years of experience in international education, Adeboye leads our team with passion and vision.</p>
+                    <div class="member-social">
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="team-member" data-aos="fade-up" data-aos-delay="200">
+                <div class="member-image">
+                    <img src="{{ url_for('static', filename='images/team/team2.jpg') }}" alt="Team Member" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="member-details">
+                    <h3 class="member-name">Funke Adedayo</h3>
+                    <p class="member-position">Educational Consultant</p>
+                    <p class="member-bio">Funke specializes in UK and Canada admissions, helping students navigate the complex application processes.</p>
+                    <div class="member-social">
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="team-member" data-aos="fade-up" data-aos-delay="300">
+                <div class="member-image">
+                    <img src="{{ url_for('static', filename='images/team/team3.jpg') }}" alt="Team Member" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="member-details">
+                    <h3 class="member-name">Tunde Bakare</h3>
+                    <p class="member-position">Visa Specialist</p>
+                    <p class="member-bio">With a background in immigration law, Tunde has helped hundreds of students secure their student visas.</p>
+                    <div class="member-social">
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="team-member" data-aos="fade-up" data-aos-delay="400">
+                <div class="member-image">
+                    <img src="{{ url_for('static', filename='images/team/team4.jpg') }}" alt="Team Member" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                </div>
+                <div class="member-details">
+                    <h3 class="member-name">Chioma Nwosu</h3>
+                    <p class="member-position">Scholarship Advisor</p>
+                    <p class="member-bio">Chioma's expertise lies in identifying scholarship opportunities for deserving students.</p>
+                    <div class="member-social">
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section" data-aos="fade-up">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Ready to Start Your Journey?</h2>
+            <p>Let us help you navigate the path to international education. Whether you're looking to pursue undergraduate studies, postgraduate programs, or professional courses, we have the expertise to guide you every step of the way.</p>
+            <a href="{{ url_for('appointment') }}" class="cta-button">Book a Consultation</a>
+        </div>
+    </div>
+</section>
+
+{% include 'components/newsletter.html' %}
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if newsletter %}Edit{% else %}Create{% endif %} Newsletter{% endblock %}
+
+{% block header_title %}{% if newsletter %}Edit{% else %}Create{% endif %} Newsletter{% endblock %}
+
+{% block extra_css %}
+<!-- Summernote WYSIWYG Editor CSS -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<style>
+    .note-editor {
+        margin-bottom: 20px;
+    }
+    
+    .preview-btn {
+        margin-right: 10px;
+    }
+    
+    .datetime-group {
+        display: none;
+    }
+    
+    #scheduled-notice {
+        display: none;
+        font-size: 0.9rem;
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+        {% if newsletter %}
+        <a href="{{ url_for('admin.preview_newsletter', id=newsletter.id) }}" class="btn btn-info btn-sm" target="_blank">
+            <i class="fas fa-eye"></i> Preview
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <form method="POST" id="newsletterForm">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                <label for="subject" class="form-label">Newsletter Subject</label>
+                {{ form.subject(class="form-control", placeholder="Enter newsletter subject") }}
+                {% if form.subject.errors %}
+                <div class="text-danger">
+                    {% for error in form.subject.errors %}
+                    <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="content" class="form-label">Content</label>
+                {{ form.content(class="form-control summernote") }}
+                {% if form.content.errors %}
+                <div class="text-danger">
+                    {% for error in form.content.errors %}
+                    <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-info mt-2">
+                    <h6 class="fw-bold">Template Variables:</h6>
+                    <ul class="mb-0">
+                        <li><code>{{name}}</code> - Subscriber name (will default to "Valued Subscriber" if not available)</li>
+                        <li><code>{{unsubscribe_link}}</code> - Unsubscribe link (required by anti-spam regulations)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="status" class="form-label">Status</label>
+                {{ form.status(class="form-control") }}
+                {% if form.status.errors %}
+                <div class="text-danger">
+                    {% for error in form.status.errors %}
+                    <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3 datetime-group" id="schedule-group">
+                <label for="scheduled_at" class="form-label">Schedule Date and Time</label>
+                {{ form.scheduled_at(class="form-control", type="datetime-local") }}
+                {% if form.scheduled_at.errors %}
+                <div class="text-danger">
+                    {% for error in form.scheduled_at.errors %}
+                    <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-warning" id="scheduled-notice">
+                    <i class="fas fa-clock"></i> This newsletter will be automatically sent at the scheduled time.
+                </div>
+            </div>
+            
+            <div class="alert alert-danger" id="send-now-notice" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> Newsletter will be sent immediately upon submission. Are you sure the content is ready?
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('admin.newsletters') }}" class="btn btn-secondary me-md-2">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                {% if newsletter %}
+                <a href="{{ url_for('admin.preview_newsletter', id=newsletter.id) }}" class="btn btn-info preview-btn" target="_blank">
+                    <i class="fas fa-eye"></i> Preview
+                </a>
+                {% endif %}
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Summernote WYSIWYG Editor JS -->
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Summernote
+        $('.summernote').summernote({
+            height: 300,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline', 'clear']],
+                ['fontname', ['fontname']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture', 'hr']],
+                ['view', ['fullscreen', 'codeview']]
+            ],
+            callbacks: {
+                onImageUpload: function(files) {
+                    alert('Please use external image URLs instead of uploading images directly.');
+                }
+            }
+        });
+        
+        // Show/hide datetime picker based on status
+        $('#status').change(function() {
+            if ($(this).val() === 'Scheduled') {
+                $('#schedule-group').show();
+                $('#scheduled-notice').show();
+                $('#send-now-notice').hide();
+            } else if ($(this).val() === 'Send Now') {
+                $('#schedule-group').hide();
+                $('#scheduled-notice').hide();
+                $('#send-now-notice').show();
+            } else {
+                $('#schedule-group').hide();
+                $('#scheduled-notice').hide();
+                $('#send-now-notice').hide();
+            }
+        });
+        
+        // Trigger change event to set initial state
+        $('#status').trigger('change');
+        
+        // Form validation
+        $('#newsletterForm').submit(function(e) {
+            if ($('#status').val() === 'Send Now') {
+                if (!confirm('Are you sure you want to send this newsletter now?')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            return true;
+        });
+    });
+</script>
+{% endblock %}

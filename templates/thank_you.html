@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Thank You Page Styles */
+    .thankyou-section {
+        padding: 120px 0;
+        text-align: center;
+        background-color: #f9f9f9;
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .thankyou-section::before {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background-color: rgba(255, 153, 51, 0.05);
+        top: -200px;
+        right: -200px;
+        z-index: 0;
+    }
+    
+    .thankyou-section::after {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background-color: rgba(255, 153, 51, 0.05);
+        bottom: -200px;
+        left: -200px;
+        z-index: 0;
+    }
+    
+    .thankyou-container {
+        position: relative;
+        z-index: 1;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .thankyou-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        color: white;
+        font-size: 40px;
+        box-shadow: 0 10px 30px rgba(255, 153, 51, 0.3);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 20px rgba(255, 153, 51, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 153, 51, 0);
+        }
+    }
+    
+    .thankyou-title {
+        font-size: 40px;
+        color: #FF9933;
+        margin-bottom: 20px;
+        animation: fadeInUp 1s ease;
+    }
+    
+    .thankyou-message {
+        font-size: 18px;
+        color: #555;
+        margin-bottom: 30px;
+        line-height: 1.8;
+        animation: fadeInUp 1s ease 0.2s forwards;
+        opacity: 0;
+    }
+    
+    .thankyou-info {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        text-align: left;
+        margin-bottom: 30px;
+        animation: fadeInUp 1s ease 0.4s forwards;
+        opacity: 0;
+    }
+    
+    .thankyou-info h3 {
+        font-size: 20px;
+        color: #333;
+        margin-bottom: 15px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .thankyou-info h3::after {
+        content: '';
+        position: absolute;
+        width: 40px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: 0;
+        left: 0;
+    }
+    
+    .thankyou-info p {
+        color: #555;
+        font-size: 16px;
+        margin-bottom: 10px;
+        line-height: 1.6;
+    }
+    
+    .thankyou-info ul {
+        padding-left: 20px;
+        margin-bottom: 0;
+    }
+    
+    .thankyou-info ul li {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    
+    .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        animation: fadeInUp 1s ease 0.6s forwards;
+        opacity: 0;
+    }
+    
+    .thankyou-btn {
+        display: inline-block;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 30px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .thankyou-btn.primary {
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+    }
+    
+    .thankyou-btn.secondary {
+        background-color: white;
+        color: #FF9933;
+        border: 2px solid #FF9933;
+    }
+    
+    .thankyou-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Animation keyframes */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .thankyou-section {
+            padding: 80px 0;
+        }
+        
+        .thankyou-title {
+            font-size: 32px;
+        }
+        
+        .thankyou-message {
+            font-size: 16px;
+        }
+        
+        .button-group {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .thankyou-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="thankyou-section">
+    <div class="container">
+        <div class="thankyou-container">
+            <div class="thankyou-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            
+            <h1 class="thankyou-title">Thank You!</h1>
+            
+            <p class="thankyou-message">
+                {% if form_type == 'appointment' %}
+                Thank you for booking an appointment with Bolakin Educational Consult. We've received your request and our team will contact you shortly to confirm your consultation.
+                {% elif form_type == 'admission' %}
+                Thank you for submitting your admission application. We've received your information and our team will review your application carefully.
+                {% elif form_type == 'contact' %}
+                Thank you for contacting Bolakin Educational Consult. We've received your message and will get back to you as soon as possible.
+                {% else %}
+                Thank you for your submission. We've received your information and will process it accordingly.
+                {% endif %}
+            </p>
+            
+            <div class="thankyou-info">
+                <h3>What Happens Next?</h3>
+                
+                {% if form_type == 'appointment' %}
+                <p>Here's what you can expect:</p>
+                <ul>
+                    <li>You will receive a confirmation email shortly.</li>
+                    <li>Our consultant will review your information and prepare for your session.</li>
+                    <li>We'll contact you within 24-48 business hours to confirm your appointment time.</li>
+                    <li>Feel free to prepare any questions or documents for your consultation.</li>
+                </ul>
+                {% elif form_type == 'admission' %}
+                <p>Here's what you can expect:</p>
+                <ul>
+                    <li>You will receive a confirmation email with your application reference number.</li>
+                    <li>Our admissions team will review your application and documents.</li>
+                    <li>We'll contact you within 3-5 business days with an update or to request additional information.</li>
+                    <li>The full application review process typically takes 1-2 weeks.</li>
+                </ul>
+                {% elif form_type == 'contact' %}
+                <p>Here's what you can expect:</p>
+                <ul>
+                    <li>You will receive a confirmation email acknowledging your message.</li>
+                    <li>Our team will review your inquiry and direct it to the appropriate department.</li>
+                    <li>We'll respond to your message within 24-48 business hours.</li>
+                    <li>For urgent matters, please contact us directly by phone.</li>
+                </ul>
+                {% else %}
+                <p>Our team will review your submission and take appropriate action. If necessary, we'll contact you for additional information or to provide updates.</p>
+                {% endif %}
+            </div>
+            
+            <div class="button-group">
+                <a href="{{ url_for('main.index') }}" class="thankyou-btn secondary">
+                    <i class="fas fa-home"></i> Return to Home
+                </a>
+                
+                {% if form_type == 'appointment' or form_type == 'contact' %}
+                <a href="{{ url_for('main.blog') }}" class="thankyou-btn primary">
+                    <i class="fas fa-book-open"></i> Explore Our Blog
+                </a>
+                {% elif form_type == 'admission' %}
+                <a href="{{ url_for('main.country_details', country_name='United Kingdom') }}" class="thankyou-btn primary">
+                    <i class="fas fa-globe-europe"></i> Explore Study Destinations
+                </a>
+                {% else %}
+                <a href="{{ url_for('main.gallery') }}" class="thankyou-btn primary">
+                    <i class="fas fa-images"></i> Explore Gallery
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include 'components/newsletter.html' %}
+{% endblock %}

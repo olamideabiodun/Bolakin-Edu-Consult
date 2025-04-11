@@ -7,12 +7,14 @@ from flask_mail import Mail
 from datetime import datetime
 from config import config
 from models import db, User, PageVisit
+from flask_wtf.csrf import CSRFProtect
 
 # Initialize extensions
 login_manager = LoginManager()
 login_manager.login_view = 'admin.login'  # Changed to admin.login
 mail = Mail()
 migrate = Migrate()
+csrf = CSRFProtect()
 
 def create_app(config_name=None):
     """Create and configure the Flask application"""
@@ -31,6 +33,7 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
     
     # Register blueprints
     from routes.main import main as main_blueprint
@@ -43,6 +46,8 @@ def create_app(config_name=None):
     from routes.admin import admin as admin_blueprint
     app.register_blueprint(admin_blueprint, url_prefix='/admin/dashboard')
     
+    register_error_handlers(app)
+
     # Protect admin routes
     @app.before_request
     def restrict_admin_access():
@@ -97,12 +102,32 @@ def create_app(config_name=None):
                     db.session.rollback()
                     app.logger.error(f"Error creating admin user: {str(e)}")
     
+def register_error_handlers(app):
+    """Register error handlers for the application"""
+    
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500)
+    def server_error(e):
+        return render_template('errors/500.html'), 500
+    
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/404.html'), 403  # Redirect to 404 for security
+    
+    @app.errorhandler(400)
+    def bad_request(e):
+        return render_template('errors/500.html'), 400  # Redirect to 500
+
     return app
 
 @login_manager.user_loader
 def load_user(user_id):
     """User loader function for Flask-Login"""
     return User.query.get(int(user_id))
+
 
 if __name__ == '__main__':
     app = create_app()

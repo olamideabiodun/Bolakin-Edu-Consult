@@ -1,0 +1,633 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Gallery Page Styles */
+    .gallery-hero {
+        background-color: #000;
+        position: relative;
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .gallery-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1;
+    }
+    
+    .gallery-hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        color: white;
+        padding: 20px;
+    }
+    
+    .gallery-hero-content h1 {
+        font-size: 48px;
+        color: #FF9933;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .gallery-hero-content p {
+        font-size: 18px;
+        max-width: 800px;
+        margin: 0 auto;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .gallery-hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.5;
+    }
+    
+    .gallery-section {
+        padding: 80px 0;
+        background-color: #f9f9f9;
+    }
+    
+    .gallery-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    
+    .gallery-header h2 {
+        font-size: 36px;
+        color: #FF9933;
+        margin-bottom: 15px;
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .gallery-header h2::after {
+        content: '';
+        position: absolute;
+        width: 80px;
+        height: 3px;
+        background-color: #FF9933;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .gallery-header p {
+        max-width: 800px;
+        margin: 20px auto 0;
+        color: #555;
+        font-size: 18px;
+    }
+    
+    .gallery-filter {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .filter-btn {
+        padding: 8px 20px;
+        background-color: #fff;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+        background-color: #FF9933;
+        color: white;
+        border-color: #FF9933;
+    }
+    
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .gallery-item {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        height: 250px;
+    }
+    
+    .gallery-item:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .gallery-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .gallery-item:hover .gallery-img {
+        transform: scale(1.1);
+    }
+    
+    .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        color: white;
+        transition: opacity 0.3s ease;
+        opacity: 0;
+    }
+    
+    .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+    }
+    
+    .gallery-location {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .gallery-date {
+        font-size: 14px;
+        opacity: 0.8;
+    }
+    
+    /* Reviews Section */
+    .reviews-section {
+        padding: 80px 0;
+        background-color: #fff;
+    }
+    
+    .reviews-slider {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    .review-card {
+        background-color: #f9f9f9;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        margin: 20px 10px;
+        position: relative;
+    }
+    
+    .review-text {
+        font-size: 16px;
+        color: #555;
+        line-height: 1.8;
+        margin-bottom: 20px;
+        position: relative;
+        padding-left: 25px;
+    }
+    
+    .review-text::before {
+        content: '"';
+        position: absolute;
+        left: 0;
+        top: -10px;
+        font-size: 50px;
+        color: rgba(255, 153, 51, 0.3);
+        font-family: Georgia, serif;
+    }
+    
+    .review-author {
+        display: flex;
+        align-items: center;
+    }
+    
+    .author-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 15px;
+        border: 3px solid #FF9933;
+    }
+    
+    .author-info h4 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+    }
+    
+    .author-info p {
+        margin: 5px 0 0;
+        font-size: 14px;
+        color: #FF9933;
+    }
+    
+    .review-rating {
+        color: #FFD700;
+        font-size: 18px;
+        margin-top: 5px;
+    }
+    
+    /* CTA Section */
+    .cta-banner {
+        background-color: #FF9933;
+        padding: 40px 0;
+        color: white;
+        text-align: center;
+    }
+    
+    .cta-banner h3 {
+        font-size: 28px;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .cta-banner p {
+        font-size: 18px;
+        max-width: 800px;
+        margin: 0 auto 30px;
+        opacity: 0.9;
+    }
+    
+    .cta-banner-btn {
+        display: inline-block;
+        background-color: white;
+        color: #FF9933;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .cta-banner-btn:hover {
+        background-color: rgba(255, 255, 255, 0.9);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* News ticker */
+    .news-ticker {
+        background-color: #FF9933;
+        color: white;
+        padding: 10px 0;
+        overflow: hidden;
+        position: relative;
+        transform: rotate(-2deg);
+        margin-top: -20px;
+        margin-bottom: -20px;
+        z-index: 10;
+    }
+    
+    .ticker-wrap {
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .ticker-content {
+        white-space: nowrap;
+        display: inline-block;
+        animation: ticker 30s linear infinite;
+        padding-left: 100%;
+    }
+
+    @keyframes ticker {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-100%);
+        }
+    }
+    
+    .ticker-content span {
+        padding: 0 40px;
+        font-weight: 600;
+        font-size: 16px;
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .gallery-hero {
+            height: 400px;
+        }
+        
+        .gallery-hero-content h1 {
+            font-size: 36px;
+        }
+        
+        .gallery-hero-content p {
+            font-size: 16px;
+        }
+        
+        .gallery-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .gallery-hero {
+            height: 350px;
+        }
+        
+        .gallery-hero-content h1 {
+            font-size: 32px;
+        }
+        
+        .gallery-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .review-card {
+            padding: 20px;
+        }
+    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Gallery Hero -->
+<section class="gallery-hero">
+    <img src="{{ url_for('static', filename='images/gallery/hero-bg.jpg') }}" alt="Gallery Background" class="gallery-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+    <div class="gallery-hero-content">
+        <h1 data-aos="fade-up">Our Gallery & Reviews</h1>
+        <p data-aos="fade-up" data-aos-delay="200">Explore amazing destinations and hear from our satisfied students about their life-changing experiences studying abroad with Bolakin Educational Consult.</p>
+    </div>
+</section>
+
+<!-- News Ticker -->
+<div class="news-ticker">
+    <div class="ticker-wrap">
+        <div class="ticker-content">
+            <span>Educational Opportunities and Travel Updates</span>
+            <span>New Scholarship Programs Available</span>
+            <span>Upcoming University Application Deadlines</span>
+            <span>Educational Opportunities and Travel Updates</span>
+            <span>Fall 2025 Admissions Now Open</span>
+            <span>Visa Success Stories from Our Students</span>
+        </div>
+    </div>
+</div>
+
+<!-- Gallery Section -->
+<section class="gallery-section">
+    <div class="container">
+        <div class="gallery-header" data-aos="fade-up">
+            <h2>Destination Gallery</h2>
+            <p>Explore our collection of images from destinations where we've helped students pursue their dreams. Get inspired for your educational journey abroad!</p>
+        </div>
+        
+        <div class="gallery-filter" data-aos="fade-up">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="europe">Europe</button>
+            <button class="filter-btn" data-filter="america">North America</button>
+            <button class="filter-btn" data-filter="australia">Australia</button>
+            <button class="filter-btn" data-filter="asia">Asia</button>
+        </div>
+        
+        <div class="gallery-grid" data-aos="fade-up">
+            <div class="gallery-item" data-category="europe">
+                <img src="{{ url_for('static', filename='images/gallery/london.jpg') }}" alt="London" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">London, UK</div>
+                    <div class="gallery-date">August 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="europe">
+                <img src="{{ url_for('static', filename='images/gallery/paris.jpg') }}" alt="Paris" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">Paris, France</div>
+                    <div class="gallery-date">July 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="america">
+                <img src="{{ url_for('static', filename='images/gallery/newyork.jpg') }}" alt="New York" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">New York, USA</div>
+                    <div class="gallery-date">June 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="america">
+                <img src="{{ url_for('static', filename='images/gallery/toronto.jpg') }}" alt="Toronto" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">Toronto, Canada</div>
+                    <div class="gallery-date">May 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="australia">
+                <img src="{{ url_for('static', filename='images/gallery/sydney.jpg') }}" alt="Sydney" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">Sydney, Australia</div>
+                    <div class="gallery-date">April 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="asia">
+                <img src="{{ url_for('static', filename='images/gallery/singapore.jpg') }}" alt="Singapore" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">Singapore</div>
+                    <div class="gallery-date">March 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="europe">
+                <img src="{{ url_for('static', filename='images/gallery/madrid.jpg') }}" alt="Madrid" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">Madrid, Spain</div>
+                    <div class="gallery-date">February 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="europe">
+                <img src="{{ url_for('static', filename='images/gallery/berlin.jpg') }}" alt="Berlin" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">Berlin, Germany</div>
+                    <div class="gallery-date">January 2024</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="asia">
+                <img src="{{ url_for('static', filename='images/gallery/tokyo.jpg') }}" alt="Tokyo" class="gallery-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                <div class="gallery-overlay">
+                    <div class="gallery-location">Tokyo, Japan</div>
+                    <div class="gallery-date">December 2023</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Reviews Section -->
+<section class="reviews-section">
+    <div class="container">
+        <div class="gallery-header" data-aos="fade-up">
+            <h2>Student Reviews</h2>
+            <p>Hear what our students have to say about their experience with Bolakin Educational Consult.</p>
+        </div>
+        
+        <div class="reviews-slider" data-aos="fade-up">
+            <div class="review-card">
+                <p class="review-text">Working with Bolakin Educational Consult made my dream of studying in Canada a reality. Their guidance throughout the application and visa process was invaluable. I highly recommend their services to anyone looking to study abroad!</p>
+                <div class="review-author">
+                    <img src="{{ url_for('static', filename='images/reviews/student1.jpg') }}" alt="Student" class="author-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                    <div class="author-info">
+                        <h4>Chidi Okonkwo</h4>
+                        <p>Studying at University of Toronto</p>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="review-card">
+                <p class="review-text">I cannot thank Bolakin Educational Consult enough for their support. From helping me choose the right university to preparing me for the visa interview, they were with me every step of the way. Their expertise truly makes a difference!</p>
+                <div class="review-author">
+                    <img src="{{ url_for('static', filename='images/reviews/student2.jpg') }}" alt="Student" class="author-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                    <div class="author-info">
+                        <h4>Fatima Ahmed</h4>
+                        <p>Studying at Imperial College London</p>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="review-card">
+                <p class="review-text">What sets Bolakin apart is their personalized approach. They took the time to understand my academic goals and financial situation, then recommended programs that were a perfect fit. Thanks to them, I secured a scholarship that made my studies possible.</p>
+                <div class="review-author">
+                    <img src="{{ url_for('static', filename='images/reviews/student3.jpg') }}" alt="Student" class="author-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                    <div class="author-info">
+                        <h4>David Osei</h4>
+                        <p>Studying at Harvard University</p>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="review-card">
+                <p class="review-text">The team at Bolakin is professional, responsive, and genuinely cares about their clients. Even after I started my program, they checked in to ensure I was settling well. Such dedication is rare to find these days!</p>
+                <div class="review-author">
+                    <img src="{{ url_for('static', filename='images/reviews/student4.jpg') }}" alt="Student" class="author-img" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                    <div class="author-info">
+                        <h4>Sarah Musa</h4>
+                        <p>Studying at University of Melbourne</p>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Banner -->
+<section class="cta-banner">
+    <div class="container">
+        <h3 data-aos="fade-up">Ready to Start Your Educational Journey?</h3>
+        <p data-aos="fade-up" data-aos-delay="100">Let our team of experts guide you through every step of the process, from application to visa approval.</p>
+        <a href="{{ url_for('appointment') }}" class="cta-banner-btn" data-aos="fade-up" data-aos-delay="200">Book an Appointment Today</a>
+    </div>
+</section>
+
+{% include 'components/newsletter.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+<script>
+    $(document).ready(function(){
+        // Initialize Slick Carousel
+        $('.reviews-slider').slick({
+            dots: true,
+            infinite: true,
+            speed: 500,
+            slidesToShow: 2,
+            slidesToScroll: 1,
+            autoplay: true,
+            autoplaySpeed: 5000,
+            responsive: [
+                {
+                    breakpoint: 992,
+                    settings: {
+                        slidesToShow: 1,
+                        slidesToScroll: 1
+                    }
+                }
+            ]
+        });
+        
+        // Gallery Filtering
+        $('.filter-btn').click(function(){
+            const filter = $(this).data('filter');
+            
+            // Update active button
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
+            
+            if (filter === 'all') {
+                $('.gallery-item').show(300);
+            } else {
+                $('.gallery-item').hide(300);
+                $('.gallery-item[data-category="' + filter + '"]').show(300);
+            }
+        });
+        
+        // Gallery Item Hover Effect
+        $('.gallery-item').hover(
+            function() {
+                $(this).find('.gallery-overlay').css('opacity', '1');
+            },
+            function() {
+                $(this).find('.gallery-overlay').css('opacity', '0');
+            }
+        );
+    });
+</script>
+{% endblock %}

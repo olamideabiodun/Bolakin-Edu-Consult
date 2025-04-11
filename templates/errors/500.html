@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .error-page {
+        padding: 100px 0;
+        text-align: center;
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        background-color: #f9f9f9;
+    }
+    
+    .error-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .error-code {
+        font-size: 120px;
+        font-weight: 700;
+        color: #FF9933;
+        margin-bottom: 20px;
+        line-height: 1;
+    }
+    
+    .error-title {
+        font-size: 32px;
+        margin-bottom: 20px;
+        color: #333;
+    }
+    
+    .error-message {
+        font-size: 18px;
+        color: #555;
+        margin-bottom: 30px;
+    }
+    
+    .error-btn {
+        display: inline-block;
+        background: linear-gradient(45deg, #FF8C00, #FF9933);
+        color: white;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+    }
+    
+    .error-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="error-page">
+    <div class="container">
+        <div class="error-container">
+            <div class="error-code">500</div>
+            <h1 class="error-title">Server Error</h1>
+            <p class="error-message">Sorry, something went wrong on our servers. We're working to fix the issue as soon as possible.</p>
+            <a href="{{ url_for('main.index') }}" class="error-btn">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

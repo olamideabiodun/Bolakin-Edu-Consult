@@ -1,19 +1,8 @@
 // Script for Bolakin Educational Consult website with enhanced animations
 
 // Handle preloader
-window.addEventListener('load', function() {
-    // Hide preloader after everything is loaded
-    setTimeout(() => {
-        const preloader = document.querySelector('.preloader');
-        preloader.classList.add('loaded');
-        
-        // Enable scrolling on body
-        document.body.style.overflow = 'auto';
-    }, 800);
-});
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize AOS (Animate On Scroll) with smoother settings
+    // Initialize AOS (Animate On Scroll)
     AOS.init({
         duration: 1000,
         easing: 'ease-in-out',
@@ -34,44 +23,141 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Smooth scrolling for anchor links with improved easing
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
+    // Mobile menu functionality
+    const createMobileMenu = () => {
+        const headerContainer = document.querySelector('header .container');
+        
+        // Create hamburger menu if it doesn't exist
+        if (!document.querySelector('.hamburger-menu')) {
+            // Create hamburger icon
+            const hamburger = document.createElement('div');
+            hamburger.className = 'hamburger-menu';
+            hamburger.innerHTML = '<span></span><span></span><span></span>';
             
-            const targetId = this.getAttribute('href');
-            if (targetId === '#') return;
+            // Add hamburger to header
+            headerContainer.appendChild(hamburger);
             
-            const target = document.querySelector(targetId);
-            if (target) {
-                // Calculate scroll distance for custom easing
-                const startPosition = window.pageYOffset;
-                const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - 80;
-                const distance = targetPosition - startPosition;
-                const duration = 1000; // ms
-                let start = null;
-                
-                // Custom easing function for smoother scrolling
-                function ease(t) {
-                    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-                }
-                
-                function step(timestamp) {
-                    if (!start) start = timestamp;
-                    const progress = timestamp - start;
-                    const percentage = Math.min(progress / duration, 1);
-                    const easePercentage = ease(percentage);
+            // Get navigation element and add mobile class
+            const nav = document.querySelector('nav');
+            const navLinks = document.querySelector('nav ul');
+            navLinks.className = 'nav-links';
+            
+            // Add mobile navigation styles if not already in CSS
+            const style = document.createElement('style');
+            style.textContent = `
+                @media (max-width: 768px) {
+                    .hamburger-menu {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        width: 30px;
+                        height: 21px;
+                        cursor: pointer;
+                        z-index: 1000;
+                        position: relative;
+                    }
                     
-                    window.scrollTo(0, startPosition + distance * easePercentage);
+                    .hamburger-menu span {
+                        display: block;
+                        height: 3px;
+                        width: 100%;
+                        background-color: white;
+                        border-radius: 3px;
+                        transition: all 0.3s ease;
+                    }
                     
-                    if (progress < duration) {
-                        window.requestAnimationFrame(step);
+                    .hamburger-menu.active span:nth-child(1) {
+                        transform: translateY(9px) rotate(45deg);
+                    }
+                    
+                    .hamburger-menu.active span:nth-child(2) {
+                        opacity: 0;
+                    }
+                    
+                    .hamburger-menu.active span:nth-child(3) {
+                        transform: translateY(-9px) rotate(-45deg);
+                    }
+                    
+                    nav {
+                        position: relative;
+                    }
+                    
+                    .nav-links {
+                        position: fixed;
+                        top: 0;
+                        right: -280px;
+                        background-color: #000;
+                        width: 280px;
+                        height: 100vh;
+                        padding: 80px 20px 30px;
+                        flex-direction: column;
+                        z-index: 999;
+                        transition: right 0.3s ease;
+                        overflow-y: auto;
+                    }
+                    
+                    .nav-links.active {
+                        right: 0;
+                        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                    }
+                    
+                    .nav-links li {
+                        margin: 15px 0;
+                    }
+                    
+                    .nav-links li a {
+                        display: block;
+                        padding: 10px 0;
+                    }
+                    
+                    .nav-links .book-btn {
+                        margin-top: 15px;
+                        text-align: center;
+                    }
+                    
+                    body.menu-open {
+                        overflow: hidden;
                     }
                 }
-                
-                window.requestAnimationFrame(step);
-            }
-        });
+            `;
+            document.head.appendChild(style);
+            
+            // Toggle navigation on hamburger click
+            hamburger.addEventListener('click', function() {
+                this.classList.toggle('active');
+                navLinks.classList.toggle('active');
+                document.body.classList.toggle('menu-open');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (navLinks.classList.contains('active') && 
+                    !navLinks.contains(e.target) && 
+                    !hamburger.contains(e.target)) {
+                    navLinks.classList.remove('active');
+                    hamburger.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                }
+            });
+            
+            // Close menu when clicking on links
+            const menuLinks = navLinks.querySelectorAll('a');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    navLinks.classList.remove('active');
+                    hamburger.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                });
+            });
+        }
+    };
+    
+    // Initialize mobile menu
+    createMobileMenu();
+    
+    // Update mobile menu on window resize
+    window.addEventListener('resize', function() {
+        createMobileMenu();
     });
     
     // Improved scroll to top button functionality with smoother animation

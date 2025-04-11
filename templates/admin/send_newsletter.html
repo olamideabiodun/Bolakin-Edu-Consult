@@ -1,0 +1,113 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Send Newsletter{% endblock %}
+
+{% block header_title %}Send Newsletter{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Send Newsletter: {{ newsletter.subject }}</h6>
+                <a href="{{ url_for('admin.preview_newsletter', id=newsletter.id) }}" class="btn btn-info btn-sm" target="_blank">
+                    <i class="fas fa-eye"></i> Preview
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Newsletter Details</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Subject:</strong> {{ newsletter.subject }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{% if newsletter.status == 'Draft' %}secondary{% elif newsletter.status == 'Scheduled' %}info{% else %}primary{% endif %}">
+                                    {{ newsletter.status }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Created By:</strong> {{ newsletter.creator.username }}</p>
+                            <p><strong>Created At:</strong> {{ newsletter.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h5 class="alert-heading"><i class="fas fa-info-circle"></i> Recipient Information</h5>
+                    <p>This newsletter will be sent to <strong>{{ active_subscriber_count }}</strong> active subscribers.</p>
+                    
+                    {% if active_subscriber_count == 0 %}
+                    <hr>
+                    <p class="mb-0 text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> There are no active subscribers to send to. Please add subscribers first.
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Important Information</h5>
+                    <p>
+                        Before sending, please make sure:
+                    </p>
+                    <ul>
+                        <li>The newsletter content is complete and properly formatted</li>
+                        <li>All links are working correctly</li>
+                        <li>Template variables are used properly ({{name}}, {{unsubscribe_link}})</li>
+                    </ul>
+                    <p class="mb-0">
+                        <strong>Note:</strong> Once sent, a newsletter cannot be edited or deleted.
+                    </p>
+                </div>
+                
+                {% if active_subscriber_count > 0 %}
+                <form method="POST" action="{{ url_for('admin.send_newsletter', id=newsletter.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmSend" required>
+                        <label class="form-check-label" for="confirmSend">
+                            I confirm that this newsletter is ready to be sent to <strong>{{ active_subscriber_count }}</strong> subscribers
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin.newsletters') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success" id="sendButton" disabled>
+                            <i class="fas fa-paper-plane"></i> Send Newsletter
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('admin.newsletters') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Newsletters
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Enable/disable send button based on confirmation checkbox
+        $('#confirmSend').change(function() {
+            $('#sendButton').prop('disabled', !this.checked);
+        });
+        
+        // Confirm before submitting
+        $('form').submit(function(e) {
+            if (!confirm('Are you sure you want to send this newsletter to {{ active_subscriber_count }} subscribers? This action cannot be undone.')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}
