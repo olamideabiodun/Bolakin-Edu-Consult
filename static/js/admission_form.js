@@ -116,7 +116,36 @@ document.addEventListener('DOMContentLoaded', function() {
         return re.test(String(email).toLowerCase());
     }
     
-    // Form Submission
+    // Show form messages
+    function showMessage(type, message) {
+        // Remove any existing message
+        const existingMessage = document.querySelector('.form-message');
+        if (existingMessage) existingMessage.remove();
+        
+        // Create message element
+        const messageElement = document.createElement('div');
+        messageElement.className = `form-message ${type}`;
+        messageElement.textContent = message;
+        
+        // Append to form footer
+        const formFooter = document.querySelector('.form-footer');
+        if (formFooter) {
+            formFooter.prepend(messageElement);
+            
+            // Scroll to message
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                messageElement.classList.add('fade-out');
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 300);
+            }, 5000);
+        }
+    }
+    
+    // Form Submission with improved error handling
     admissionForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -128,6 +157,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return;
         }
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitApplication');
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = 'Submitting...';
+        submitBtn.disabled = true;
         
         // Create FormData object
         const formData = new FormData(admissionForm);
@@ -144,9 +179,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+            
             if (data.success) {
                 // Show success message
-                showMessage('success', 'Your application has been submitted successfully! We will contact you via email.');
+                showMessage('success', data.message || 'Your application has been submitted successfully! We will contact you via email.');
                 // Reset form
                 admissionForm.reset();
                 // Reset file info
@@ -161,30 +199,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            showMessage('error', 'There was an error submitting your application. Please try again later.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+            showMessage('error', 'There was an error connecting to the server. Please try again later.');
         });
     });
-    
-    // Display message function
-    function showMessage(type, message) {
-        // Remove any existing message
-        const existingMessage = document.querySelector('.form-message');
-        if (existingMessage) existingMessage.remove();
-        
-        // Create message element
-        const messageElement = document.createElement('div');
-        messageElement.className = `form-message ${type}`;
-        messageElement.textContent = message;
-        
-        // Append to form footer
-        const formFooter = document.querySelector('.form-footer');
-        if (formFooter) {
-            formFooter.prepend(messageElement);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                messageElement.remove();
-            }, 5000);
-        }
-    }
 });

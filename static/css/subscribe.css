@@ -53,9 +53,10 @@
     flex: 1;
     min-width: 300px;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-end;
     position: relative;
+    max-width: 100%;
 }
 
 .unsubscribe-text {
@@ -67,11 +68,11 @@
 }
 
 .newsletter-input {
-    width: 100%;
-    max-width: 400px;
+    flex: 1;
     height: 50px;
     padding: 0 20px;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: none;
     border-radius: 50px 0 0 50px;
     background-color: rgba(255, 255, 255, 0.05);
     color: white;
@@ -101,6 +102,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .newsletter-btn:hover {
@@ -128,6 +130,8 @@
     .newsletter-form {
         justify-content: center;
         width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
     }
     
     .unsubscribe-text {

@@ -6,16 +6,18 @@
     z-index: 1050;
     background-color: white;
     border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     min-width: 300px;
     max-width: 400px;
     transform: translateX(110%);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
     overflow: hidden;
+    opacity: 0;
 }
 
 .notification.show {
     transform: translateX(0);
+    opacity: 1;
 }
 
 .notification-content {
@@ -29,20 +31,20 @@
     margin-right: 15px;
 }
 
-.notification.success i {
-    color: #27ae60;
-}
-
-.notification.error i {
-    color: #e74c3c;
-}
-
 .notification.success {
     border-left: 4px solid #27ae60;
 }
 
+.notification.success i {
+    color: #27ae60;
+}
+
 .notification.error {
     border-left: 4px solid #e74c3c;
+}
+
+.notification.error i {
+    color: #e74c3c;
 }
 
 .notification p {
@@ -69,11 +71,12 @@
 
 /* Form message styles */
 .form-message {
-    margin-top: 10px;
-    padding: 10px 15px;
+    margin: 15px 0;
+    padding: 12px 15px;
     border-radius: 8px;
     animation: fadeIn 0.3s ease;
     text-align: center;
+    font-weight: 500;
 }
 
 .form-message.error {
@@ -102,13 +105,60 @@
     to { opacity: 0; transform: translateY(-10px); }
 }
 
+/* Subscription success notification */
+.subscription-success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(45deg, #FF8C00, #FF9933);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    animation: slideIn 0.5s ease forwards;
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.subscription-success-message .message-content {
+    display: flex;
+    align-items: center;
+}
+
+.subscription-success-message i.fa-check-circle {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.subscription-success-message .close-message {
+    background: none;
+    border: none;
+    color: white;
+    margin-left: 15px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
 /* Mobile responsiveness */
 @media (max-width: 576px) {
-    .notification {
+    .notification,
+    .subscription-success-message {
         top: auto;
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        width: auto;
         min-width: auto;
         max-width: none;
     }

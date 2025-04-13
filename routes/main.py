@@ -198,7 +198,6 @@ def country_details(country_name):
     # from a database in a real implementation
     return render_template('country_details.html', country=country_name)
 
-
 @main.route('/subscribe', methods=['POST'])
 def subscribe():
     """Handle newsletter subscription"""
@@ -218,38 +217,54 @@ def subscribe():
                     # Reactivate subscriber
                     existing_subscriber.is_active = True
                     db.session.commit()
+                    # Use flash for server-side redirect
                     flash('Your subscription has been reactivated!', 'success')
                 else:
-                    return jsonify({'success': False, 'message': 'You are already subscribed!'})
+                    # For AJAX requests
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return jsonify({'success': False, 'message': 'You are already subscribed!'})
+                    # For form submit with page reload
+                    flash('You are already subscribed!', 'info')
+                    return redirect(request.referrer or url_for('main.index'))
             else:
                 # Add new subscriber
                 new_subscriber = Subscriber(email=email, name=name)
                 db.session.add(new_subscriber)
                 db.session.commit()
+                # Use flash for server-side redirect
+                flash('Thank you for subscribing to our newsletter!', 'success')
             
-            # Send confirmation emails
+            # Try to send confirmation emails but don't fail if they can't be sent
             try:
                 # Email to admin
                 send_admin_notification(email)
                 
                 # Email to subscriber
                 send_subscriber_confirmation(email)
-                
-                # Redirect with success message
-                if request.referrer:
-                    return redirect(request.referrer + '?subscription=success')
-                else:
-                    return redirect(url_for('main.index', subscription='success'))
-                
             except Exception as e:
                 current_app.logger.error(f"Email sending error: {str(e)}")
-                return jsonify({'success': False, 'message': 'Subscribed, but failed to send confirmation email'})
+                # Don't block the subscription process if emails fail
+            
+            # Redirect with success message
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': True, 'message': 'Successfully subscribed!'})
+            else:
+                return redirect(request.referrer + '?subscription=success' if request.referrer else url_for('main.index', subscription='success'))
                 
         except Exception as e:
+            db.session.rollback()
             current_app.logger.error(f"Subscription error: {str(e)}")
-            return jsonify({'success': False, 'message': 'An error occurred while processing your subscription'})
+            # For AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': 'An error occurred while processing your subscription'})
+            # For form submit with page reload
+            flash('An error occurred while processing your subscription', 'error')
+            return redirect(request.referrer or url_for('main.index'))
     
-    return jsonify({'success': False, 'message': 'Invalid request method'})
+    # If not POST or other issue
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': False, 'message': 'Invalid request method'})
+    return redirect(url_for('main.index'))
 
 
 @main.route('/unsubscribe')
@@ -544,7 +559,7 @@ def save_file(file, directory, filename=None):
 
 # Use in the submit_admission route
 
-@main.route('/submit-admission', methods=['POST'])
+
 @main.route('/submit-admission', methods=['POST'])
 def submit_admission():
     """Handle admission application submission"""

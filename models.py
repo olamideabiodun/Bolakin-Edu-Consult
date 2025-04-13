@@ -229,4 +229,4 @@ class BlogComment(db.Model):
     post = db.relationship('BlogPost', backref=db.backref('comments', lazy=True))
     
     def __repr__(self):
-        return f'<BlogComment {self.id} on post {self.post_id}>'
+        return f'<BlogComment {self.id} on post {self.post_id}>'  
