@@ -11,7 +11,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
-import imghdr
 from flask import current_app
 
 main = Blueprint('main', __name__)
@@ -198,74 +197,170 @@ def country_details(country_name):
     # from a database in a real implementation
     return render_template('country_details.html', country=country_name)
 
-@main.route('/subscribe', methods=['POST'])
+@main.route('/subscribe', methods=['POST', 'GET'])
 def subscribe():
-    """Handle newsletter subscription"""
-    if request.method == 'POST':
-        email = request.form.get('email')
-        name = request.form.get('name', '')
+    """
+    Handle newsletter subscription.
+    Supports both AJAX and form submissions.
+    Handles various content types and data formats.
+    """
+    # Debug logging
+    current_app.logger.info(f"Subscribe route accessed with method: {request.method}")
+    current_app.logger.info(f"URL: {request.url}")
+    current_app.logger.info(f"Headers: {dict(request.headers)}")
+    
+    # For GET requests - either return a form or redirect
+    if request.method == 'GET':
+        current_app.logger.info("GET request to subscribe endpoint")
+        # If AJAX, return message
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'This endpoint requires a POST request'}), 405
+        # Otherwise redirect to home page
+        return redirect(url_for('main.index'))
+    
+    # Process POST request
+    try:
+        # Log all possible data sources
+        current_app.logger.info(f"Form data: {request.form}")
+        current_app.logger.info(f"JSON data: {request.get_json(silent=True)}")
+        current_app.logger.info(f"Content type: {request.content_type}")
         
+        # Extract email and name from various possible sources
+        email = None
+        name = ''
+        
+        # Try form data (application/x-www-form-urlencoded or multipart/form-data)
+        if request.form:
+            email = request.form.get('email')
+            name = request.form.get('name', '')
+            current_app.logger.info(f"Extracted from form: email={email}, name={name}")
+        
+        # Try JSON data (application/json)
+        elif request.is_json:
+            json_data = request.get_json()
+            if json_data:
+                email = json_data.get('email')
+                name = json_data.get('name', '')
+                current_app.logger.info(f"Extracted from JSON: email={email}, name={name}")
+        
+        # Try request body as raw text (might be malformed JSON or custom format)
+        elif request.data:
+            try:
+                import json
+                data = json.loads(request.data.decode('utf-8'))
+                email = data.get('email')
+                name = data.get('name', '')
+                current_app.logger.info(f"Extracted from raw data: email={email}, name={name}")
+            except json.JSONDecodeError:
+                # Try to parse as URL-encoded form data
+                from urllib.parse import parse_qs
+                data = parse_qs(request.data.decode('utf-8'))
+                email = data.get('email', [None])[0]
+                name = data.get('name', [''])[0]
+                current_app.logger.info(f"Extracted from parsed data: email={email}, name={name}")
+        
+        # Validate email
         if not email:
-            return jsonify({'success': False, 'message': 'Email is required'})
+            current_app.logger.warning("No email found in request")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': 'Email is required'}), 400
+            flash('Email is required', 'error')
+            return redirect(request.referrer or url_for('main.index'))
         
-        try:
-            # Check if subscriber already exists
-            existing_subscriber = Subscriber.query.filter_by(email=email).first()
-            
-            if existing_subscriber:
-                if not existing_subscriber.is_active:
-                    # Reactivate subscriber
-                    existing_subscriber.is_active = True
-                    db.session.commit()
-                    # Use flash for server-side redirect
-                    flash('Your subscription has been reactivated!', 'success')
-                else:
-                    # For AJAX requests
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return jsonify({'success': False, 'message': 'You are already subscribed!'})
-                    # For form submit with page reload
-                    flash('You are already subscribed!', 'info')
-                    return redirect(request.referrer or url_for('main.index'))
+        # Validate email format
+        import re
+        email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        if not email_pattern.match(email):
+            current_app.logger.warning(f"Invalid email format: {email}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': 'Invalid email format'}), 400
+            flash('Invalid email format', 'error')
+            return redirect(request.referrer or url_for('main.index'))
+        
+        # Check if subscriber already exists
+        existing_subscriber = Subscriber.query.filter_by(email=email).first()
+        
+        if existing_subscriber:
+            if not existing_subscriber.is_active:
+                # Reactivate subscriber
+                existing_subscriber.is_active = True
+                existing_subscriber.name = name if name else existing_subscriber.name  # Update name if provided
+                db.session.commit()
+                current_app.logger.info(f"Reactivated subscriber: {email}")
+                
+                # Respond appropriately
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True, 
+                        'message': 'Your subscription has been reactivated!'
+                    })
+                flash('Your subscription has been reactivated!', 'success')
+                return redirect(request.referrer + '?subscription=reactivated' if request.referrer else url_for('main.index', subscription='reactivated'))
             else:
-                # Add new subscriber
+                # Already subscribed
+                current_app.logger.info(f"Existing active subscriber: {email}")
+                
+                # Respond appropriately
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': False, 
+                        'message': 'You are already subscribed!'
+                    })
+                flash('You are already subscribed!', 'info')
+                return redirect(request.referrer or url_for('main.index'))
+        else:
+            # Add new subscriber
+            try:
                 new_subscriber = Subscriber(email=email, name=name)
                 db.session.add(new_subscriber)
                 db.session.commit()
-                # Use flash for server-side redirect
+                current_app.logger.info(f"Added new subscriber: {email}")
+                
+                # Try to send confirmation emails (don't block if they fail)
+                try:
+                    send_admin_notification(email)
+                    send_subscriber_confirmation(email)
+                    current_app.logger.info(f"Confirmation emails sent for: {email}")
+                except Exception as email_error:
+                    current_app.logger.error(f"Error sending confirmation emails: {str(email_error)}")
+                    # Continue processing - don't block the subscription
+                
+                # Respond appropriately
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True, 
+                        'message': 'Thank you for subscribing to our newsletter!'
+                    })
                 flash('Thank you for subscribing to our newsletter!', 'success')
-            
-            # Try to send confirmation emails but don't fail if they can't be sent
-            try:
-                # Email to admin
-                send_admin_notification(email)
-                
-                # Email to subscriber
-                send_subscriber_confirmation(email)
-            except Exception as e:
-                current_app.logger.error(f"Email sending error: {str(e)}")
-                # Don't block the subscription process if emails fail
-            
-            # Redirect with success message
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'success': True, 'message': 'Successfully subscribed!'})
-            else:
                 return redirect(request.referrer + '?subscription=success' if request.referrer else url_for('main.index', subscription='success'))
+            
+            except Exception as db_error:
+                db.session.rollback()
+                current_app.logger.error(f"Database error adding subscriber: {str(db_error)}")
                 
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Subscription error: {str(e)}")
-            # For AJAX requests
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'success': False, 'message': 'An error occurred while processing your subscription'})
-            # For form submit with page reload
-            flash('An error occurred while processing your subscription', 'error')
-            return redirect(request.referrer or url_for('main.index'))
+                # Respond appropriately
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': False, 
+                        'message': 'A database error occurred. Please try again later.'
+                    }), 500
+                flash('A database error occurred. Please try again later.', 'error')
+                return redirect(request.referrer or url_for('main.index'))
     
-    # If not POST or other issue
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({'success': False, 'message': 'Invalid request method'})
-    return redirect(url_for('main.index'))
-
+    except Exception as e:
+        # Catch-all for any other errors
+        current_app.logger.error(f"Unexpected error in subscribe route: {str(e)}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        
+        # Respond appropriately
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': False, 
+                'message': 'An unexpected error occurred. Please try again later.'
+            }), 500
+        flash('An unexpected error occurred. Please try again later.', 'error')
+        return redirect(request.referrer or url_for('main.index'))
 
 @main.route('/unsubscribe')
 def unsubscribe():
@@ -509,15 +604,27 @@ def validate_file(file, allowed_extensions, max_size_mb=5):
     if file_size > max_size_bytes:
         return False, f"File size exceeds {max_size_mb}MB limit"
     
-    # For images, verify the file is actually an image
+    # For images, verify the file is actually an image using file signatures
     if ext in ['.jpg', '.jpeg', '.png', '.gif']:
         try:
             # Read enough data to determine file type
             header = file.read(512)
             file.seek(0)  # Reset file pointer
-            format = imghdr.what(None, header)
-            if not format:
-                return False, "Invalid image file"
+            
+            # Check image file signatures
+            is_valid_image = False
+            if ext == '.jpg' or ext == '.jpeg':
+                # JPEG signature starts with bytes FF D8 FF
+                is_valid_image = header.startswith(b'\xff\xd8\xff')
+            elif ext == '.png':
+                # PNG signature is 89 50 4E 47 0D 0A 1A 0A
+                is_valid_image = header.startswith(b'\x89PNG\r\n\x1a\n')
+            elif ext == '.gif':
+                # GIF signature starts with 'GIF87a' or 'GIF89a'
+                is_valid_image = header.startswith(b'GIF87a') or header.startswith(b'GIF89a')
+            
+            if not is_valid_image:
+                return False, "Invalid image file format"
         except Exception:
             return False, "Could not verify image file"
     
