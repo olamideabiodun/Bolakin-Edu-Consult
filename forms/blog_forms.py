@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, BooleanField, SubmitField, SelectMultipleField
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms.validators import DataRequired, Length, Optional, ValidationError
 from flask_wtf.file import FileField, FileAllowed
 import re
 
@@ -25,14 +25,19 @@ class BlogPostForm(FlaskForm):
         DataRequired()
     ])
     
-    categories = SelectMultipleField('Categories', coerce=int)
+    categories = SelectMultipleField('Categories', coerce=int, validators=[Optional()])
     
-    featured_image = FileField('Featured Image', validators=[
+    featured_image = FileField('Featured Image (Thumbnail/Preview)', validators=[
         Optional(),
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')
     ])
     
-    is_published = BooleanField('Publish', default=True)
+    hero_background_image = FileField('Hero Background Image (Large, for top of post)', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')
+    ])
+    
+    is_published = BooleanField('Publish Post', default=True)
     
     submit = SubmitField('Save Post')
     
@@ -40,7 +45,7 @@ class BlogPostForm(FlaskForm):
         """Validate that slug contains only URL-safe characters"""
         pattern = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
         if not pattern.match(field.data):
-            raise ValueError('Slug must contain only lowercase letters, numbers, and hyphens')
+            raise ValidationError('Slug must contain only lowercase letters, numbers, and hyphens')
 
 
 class BlogCategoryForm(FlaskForm):
@@ -51,7 +56,7 @@ class BlogCategoryForm(FlaskForm):
     ])
     
     slug = StringField('Slug (URL)', validators=[
-        DataRequired(),
+        Optional(),
         Length(max=100, message='Slug must be less than 100 characters.')
     ])
     
@@ -64,9 +69,10 @@ class BlogCategoryForm(FlaskForm):
     
     def validate_slug(self, field):
         """Validate that slug contains only URL-safe characters"""
-        pattern = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
-        if not pattern.match(field.data):
-            raise ValueError('Slug must contain only lowercase letters, numbers, and hyphens')
+        if field.data: # Only validate if data is provided
+            pattern = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
+            if not pattern.match(field.data):
+                raise ValidationError('Slug must contain only lowercase letters, numbers, and hyphens')
 
 
 class BlogCommentForm(FlaskForm):

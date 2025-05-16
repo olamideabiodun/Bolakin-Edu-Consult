@@ -10,38 +10,168 @@
         <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
     </div>
     <div class="card-body">
-        <form method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" value="{{ user.username if user else '' }}" required>
+        <form method="POST" action="{{ url_for('admin.edit_user', id=user.id) if user else url_for('admin.create_user') }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.username.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        {{ form.new_password.label(class="form-label") }} {% if user %}<small class="text-muted">(Leave blank to keep current password)</small>{% endif %}
+                        {{ form.new_password(class="form-control" + (" is-invalid" if form.new_password.errors else "")) }}
+                        {% if form.new_password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.new_password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        {{ form.confirm_new_password.label(class="form-label") }}
+                        {{ form.confirm_new_password(class="form-control" + (" is-invalid" if form.confirm_new_password.errors else "")) }}
+                        {% if form.confirm_new_password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.confirm_new_password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-check mb-3">
+                        {{ form.is_admin(class="form-check-input") }}
+                        {{ form.is_admin.label(class="form-check-label") }}
+                    </div>
+
+                    <h5 class="mt-4 mb-3">Social Media Handles (Optional)</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.linkedin_url.label(class="form-label") }}
+                                {{ form.linkedin_url(class="form-control" + (" is-invalid" if form.linkedin_url.errors else ""), placeholder="https://linkedin.com/in/yourprofile") }}
+                                {% if form.linkedin_url.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.linkedin_url.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.twitter_url.label(class="form-label") }}
+                                {{ form.twitter_url(class="form-control" + (" is-invalid" if form.twitter_url.errors else ""), placeholder="https://twitter.com/yourprofile") }}
+                                {% if form.twitter_url.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.twitter_url.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.instagram_url.label(class="form-label") }}
+                                {{ form.instagram_url(class="form-control" + (" is-invalid" if form.instagram_url.errors else ""), placeholder="https://instagram.com/yourprofile") }}
+                                {% if form.instagram_url.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.instagram_url.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.facebook_url.label(class="form-label") }}
+                                {{ form.facebook_url(class="form-control" + (" is-invalid" if form.facebook_url.errors else ""), placeholder="https://facebook.com/yourprofile") }}
+                                {% if form.facebook_url.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.facebook_url.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4 mb-3">Change Password (Optional)</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.current_password.label(class="form-label") }}
+                                {{ form.current_password(class="form-control" + (" is-invalid" if form.current_password.errors else "")) }}
+                                {% if form.current_password.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.current_password.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.new_password.label(class="form-label") }}
+                                {{ form.new_password(class="form-control" + (" is-invalid" if form.new_password.errors else "")) }}
+                                {% if form.new_password.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.new_password.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.confirm_new_password.label(class="form-label") }}
+                                {{ form.confirm_new_password(class="form-control" + (" is-invalid" if form.confirm_new_password.errors else "")) }}
+                                {% if form.confirm_new_password.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.confirm_new_password.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        {{ form.profile_image.label(class="form-label") }}
+                        {% if user and user.profile_image_file %}
+                            <img src="{{ url_for('main.uploaded_file', subpath=user.profile_image_file) }}"
+                                 alt="Current Profile Picture" class="img-thumbnail mb-2" style="max-width: 150px; max-height: 150px;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/default_avatar.png') }}" 
+                                 alt="Default Profile Picture" class="img-thumbnail mb-2" style="max-width: 150px; max-height: 150px;">
+                        {% endif %}
+                        {{ form.profile_image(class="form-control" + (" is-invalid" if form.profile_image.errors else "")) }}
+                        {% if form.profile_image.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.profile_image.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            
-            <div class="mb-3">
-                <label for="email" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user else '' }}" required>
-            </div>
-            
-            <div class="mb-3">
-                <label for="password" class="form-label">
-                    {% if user %}New Password (leave blank to keep current){% else %}Password{% endif %}
-                </label>
-                <input type="password" class="form-control" id="password" name="new_password" {% if not user %}required{% endif %}>
-                {% if not user %}
-                <div class="form-text text-muted">Password must be at least 8 characters long.</div>
-                {% endif %}
-            </div>
-            
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="is_admin" name="is_admin" {% if user and user.is_admin %}checked{% endif %}>
-                <label class="form-check-label" for="is_admin">Admin Privileges</label>
-                <div class="form-text text-muted">Admin users have full access to all system features.</div>
-            </div>
-            
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary me-md-2">Cancel</a>
-                <button type="submit" class="btn btn-primary">Save User</button>
+
+            <div class="mt-3">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

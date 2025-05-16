@@ -1,3 +1,14 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden; /* Optional: helps prevent accidental horizontal scrollbars */
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 /* Preloader - Fixed version */
 .preloader {
     position: fixed;
@@ -66,6 +77,7 @@
 
 /* Header */
 header {
+    width: 100%; /* Ensure header spans full width */
     background-color: #000;
     padding: 15px 0;
     color: white;
@@ -463,21 +475,20 @@ nav ul li a:hover::after {
 }
 
 .services > .container > p {
-    max-width: 800px;
-    margin: 40px auto 20px;
-    font-size: 18px;
-    color: #555;
     text-align: center;
-    line-height: 1.9;
+    margin-bottom: 50px; /* Increased margin */
+    font-size: 1.1em;
+    color: #666;
+    max-width: 700px; /* Constrain width for readability */
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    margin-top: 60px;
-    position: relative;
-    z-index: 2;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */
+    gap: 30px; /* Increased gap between cards */
+    padding: 0; /* Remove any default padding if present */
 }
 
 .service-card {
@@ -904,20 +915,20 @@ footer .container {
     }
     
     .feature-box {
-        width: 100%;
-        min-width: 100%;
-        margin-bottom: 30px;
+        width: 100%; /* Full width on smaller screens */
+        margin-bottom: 20px;
     }
     
     .benefits-grid, .services-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 30px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjust for slightly smaller cards */
+        gap: 25px;
     }
 }
 
 @media (max-width: 768px) {
     header .container {
-        flex-direction: column;
+        flex-direction: column; /* Stack logo and nav on small screens */
+        align-items: flex-start;
     }
     
     .logo {
@@ -974,12 +985,13 @@ footer .container {
 
 @media (max-width: 576px) {
     .countries-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
     }
     
     .destinations {
-        grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Ensure flags are responsive */
+        gap: 10px;
     }
     
     .hero h1 {
@@ -987,24 +999,25 @@ footer .container {
     }
     
     .hero h2 {
-        font-size: 20px;
+        font-size: 1.6em;
     }
     
     .cta-button, .contact-btn {
-        padding: 12px 30px;
-        font-size: 16px;
+        padding: 10px 20px;
+        font-size: 0.9em;
     }
     
     .benefit-image {
-        height: 180px;
+        height: 150px;
     }
     
     .service-card, .benefit-card {
-        padding: 25px 20px;
+        padding: 20px; /* Adjust padding for smaller cards */
+        /* Removed min-width to allow flex-basis from grid's minmax to take over */
     }
     
     .agent-card {
-        padding: 30px 20px;
+        padding: 20px;
     }
     
     .consultant-image {

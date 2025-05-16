@@ -13,9 +13,9 @@
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Total Subscribers</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_subscribers }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_subscribers or 0 }}</div>
                         <div class="small text-success">
-                            {{ active_subscribers }} active
+                            {{ active_subscribers or 0 }} active
                         </div>
                     </div>
                     <div class="col-auto">
@@ -36,7 +36,7 @@
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                             Total Applications</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_applications }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_applications or 0 }}</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-graduation-cap fa-2x text-gray-300"></i>
@@ -56,9 +56,9 @@
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                             Newsletters</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_newsletters }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_newsletters or 0 }}</div>
                         <div class="small text-info">
-                            {{ sent_newsletters }} sent
+                            {{ sent_newsletters or 0 }} sent
                         </div>
                     </div>
                     <div class="col-auto">
@@ -130,12 +130,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for page in top_pages %}
+                            {% for page in top_pages|default([]) %}
                             <tr>
                                 <td>{{ page.page }}</td>
                                 <td>{{ page.count }}</td>
                             </tr>
                             {% endfor %}
+                            {% if not top_pages %}
+                            <tr>
+                                <td colspan="2" class="text-center">No data available</td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -166,7 +171,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for application in recent_applications %}
+                            {% for application in recent_applications|default([]) %}
                             <tr>
                                 <td>{{ application.full_name }}</td>
                                 <td>{{ application.email }}</td>
@@ -180,9 +185,11 @@
                                     <span class="badge bg-success">Accepted</span>
                                     {% elif application.status == 'Rejected' %}
                                     <span class="badge bg-danger">Rejected</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ application.status }}</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ application.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ application.created_at.strftime('%Y-%m-%d') if application.created_at else 'N/A' }}</td>
                                 <td>
                                     <a href="{{ url_for('admin.application_details', id=application.id) }}" class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i> View
@@ -208,43 +215,67 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Traffic Chart
-    var ctx = document.getElementById('trafficChart').getContext('2d');
-    var trafficChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: {{ visit_dates|safe }},
-            datasets: [{
-                label: 'Site Visits',
-                data: {{ visit_counts|safe }},
-                backgroundColor: 'rgba(255, 153, 51, 0.2)',
-                borderColor: 'rgba(255, 153, 51, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(255, 153, 51, 1)',
-                pointBorderColor: '#fff',
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: 'rgba(255, 153, 51, 1)',
-                pointHoverBorderColor: '#fff',
-                pointHitRadius: 10,
-                pointBorderWidth: 2,
-                tension: 0.3
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
+    document.addEventListener('DOMContentLoaded', function() {
+        var chartElement = document.getElementById('trafficChart');
+        if (chartElement) {
+            var ctx = chartElement.getContext('2d');
+            // Get data from Jinja as strings and parse them properly
+            var visitDates = {{ visit_dates | safe }};
+            var visitCounts = {{ visit_counts | safe }};
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: visitDates,
+                    datasets: [{
+                        label: 'Site Visits',
+                        data: visitCounts,
+                        backgroundColor: 'rgba(255, 153, 51, 0.2)',
+                        borderColor: 'rgba(255, 153, 51, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(255, 153, 51, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: 'rgba(255, 153, 51, 1)',
+                        pointHoverBorderColor: '#fff',
+                        pointHitRadius: 10,
+                        pointBorderWidth: 2,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
                 }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
+            });
         }
     });
 </script>
+
+<style>
+    /* Responsive chart styles */
+    .chart-area {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+        .chart-area {
+            height: 200px;
+        }
+    }
+</style>
 {% endblock %}

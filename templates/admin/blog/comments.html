@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+{% from "admin/macros.html" import render_pagination %}
+
+{% block title %}Admin - Blog Comments{% endblock %}
+
+{% block header_title %}Blog Comments{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Manage Blog Comments</h3>
+        <div class="card-tools">
+            <!-- Filters can go here (e.g., by post, by status) -->
+        </div>
+    </div>
+    <div class="card-body">
+        {% if comments and comments.items %}
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Author</th>
+                        <th>Comment</th>
+                        <th>Post</th>
+                        <th>Status</th>
+                        <th>Submitted At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comment in comments.items %}
+                    <tr>
+                        <td>
+                            {{ comment.author_name }}<br>
+                            <small>{{ comment.author_email }}</small>
+                        </td>
+                        <td>{{ comment.content|truncate(100, True) }}</td>
+                        <td><a href="{{ url_for('main.blog_post', slug=comment.post.slug) }}" target="_blank">{{ comment.post.title|truncate(50, True) }}</a></td>
+                        <td>
+                            <span class="badge {% if comment.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ 'Approved' if comment.is_approved else 'Pending' }}
+                            </span>
+                        </td>
+                        <td>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') if comment.created_at else 'N/A' }}</td>
+                        <td>
+                            {% if not comment.is_approved %}
+                            <form method="POST" action="{{ url_for('admin.approve_blog_comment', comment_id=comment.id) }}" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-xs btn-success" title="Approve">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            <form method="POST" action="{{ url_for('admin.delete_blog_comment', comment_id=comment.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this comment?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-xs btn-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center">No comments found.</p>
+        {% endif %}
+    </div>
+    {% if pagination and pagination.pages > 1 %}
+    <div class="card-footer clearfix">
+        {{ render_pagination(pagination, 'admin.blog_comments') }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

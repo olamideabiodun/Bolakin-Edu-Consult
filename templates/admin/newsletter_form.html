@@ -44,6 +44,24 @@
         <form method="POST" id="newsletterForm">
             {{ form.hidden_tag() }}
             
+            {# Display all form errors at the top for debugging #}
+            {% if form.errors and request.method == 'POST' %}
+                <div class="alert alert-danger">
+                    <strong>Please correct the following errors:</strong>
+                    <ul>
+                        {% for field, error_list in form.errors.items() %}
+                            <li><strong>{{ form[field].label.text if form[field] and form[field].label else field }}:</strong>
+                                <ul>
+                                    {% for error in error_list %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
             <div class="mb-3">
                 <label for="subject" class="form-label">Newsletter Subject</label>
                 {{ form.subject(class="form-control", placeholder="Enter newsletter subject") }}
@@ -144,7 +162,34 @@
             ],
             callbacks: {
                 onImageUpload: function(files) {
-                    alert('Please use external image URLs instead of uploading images directly.');
+                    // Send the file to the server
+                    var formData = new FormData();
+                    formData.append("file", files[0]);
+                    $.ajax({
+                        url: '{{ url_for("admin.upload_newsletter_image") }}',
+                        method: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        beforeSend: function(xhr, settings) {
+                            var csrfToken = $('input[name="csrf_token"]').val();
+                            if (csrfToken) {
+                                xhr.setRequestHeader('X-CSRFToken', csrfToken);
+                            }
+                        },
+                        success: function(url) {
+                            // Insert image into editor
+                            $('.summernote').summernote('insertImage', url);
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            var errorMessage = 'Error uploading image.';
+                            if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                                errorMessage = jqXHR.responseJSON.error;
+                            }
+                            alert(errorMessage);
+                            console.error('Image upload error:', textStatus, errorThrown, jqXHR.responseText);
+                        }
+                    });
                 }
             }
         });

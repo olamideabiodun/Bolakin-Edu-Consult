@@ -86,8 +86,8 @@
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                             Avg. Daily Visits</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                            {% if visit_counts|length > 0 %}
-                                {{ (visit_counts|sum / visit_counts|length)|round|int }}
+                            {% if visit_counts_raw and visit_counts_raw|length > 0 %}
+                                {{ (visit_counts_raw|sum / visit_counts_raw|length)|round|int }}
                             {% else %}
                                 0
                             {% endif %}
@@ -257,10 +257,10 @@
     var trafficChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: {{ visit_dates|safe }},
+            labels: {{ visit_dates_json|safe }},
             datasets: [{
                 label: 'Daily Visits',
-                data: {{ visit_counts|safe }},
+                data: {{ visit_counts_json|safe }},
                 backgroundColor: 'rgba(255, 153, 51, 0.2)',
                 borderColor: 'rgba(255, 153, 51, 1)',
                 borderWidth: 2,

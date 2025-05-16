@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% from "components/_form_macros.html" import render_field %}
+
+{% block title %}{{ title }} - Bolakin Edu-Consult{% endblock %}
+
+{% block extra_css %}
+<style>
+    .service-form-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 30px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .service-form-container h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+    }
+    .form-group label {
+        font-weight: 600;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #FF9933;
+        box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.25);
+    }
+    .btn-primary {
+        background-color: #FF9933;
+        border-color: #FF9933;
+        padding: 10px 20px;
+        font-size: 1.1em;
+    }
+    .btn-primary:hover {
+        background-color: #FF8C00;
+        border-color: #FF8C00;
+    }
+    .date-fields-group .form-group {
+        flex: 1;
+    }
+    .passenger-fields-group .form-group {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="service-form-container">
+    <h1>{{ title }}</h1>
+    <p class="text-muted text-center mb-4">Tell us about your dream holiday, and we'll help you plan it!</p>
+    
+    <form method="POST" action="{{ url_for('main.holiday_package_request') }}" novalidate>
+        {{ form.hidden_tag() }} <!-- CSRF token -->
+
+        {{ render_field(form.full_name, class="form-control", placeholder="Enter your full name") }}
+        {{ render_field(form.email, class="form-control", placeholder="your.email@example.com") }}
+        {{ render_field(form.phone, class="form-control", placeholder="+1234567890") }}
+        
+        {{ render_field(form.destination, class="form-control") }}
+
+        <div class="row mb-3 date-fields-group">
+            <div class="col-md-4">
+                {{ render_field(form.travel_dates_flexible, class="form-select") }}
+            </div>
+            <div class="col-md-4">
+                {{ render_field(form.preferred_start_date, class="form-control") }}
+            </div>
+            <div class="col-md-4">
+                {{ render_field(form.preferred_end_date, class="form-control") }}
+            </div>
+        </div>
+        
+        {{ render_field(form.duration_days, class="form-control") }}
+
+        <label class="form-label">Number of Travelers</label>
+        <div class="row mb-3 passenger-fields-group">
+            <div class="col-md-6">
+                {{ render_field(form.num_adults, class="form-select") }}
+            </div>
+            <div class="col-md-6">
+                {{ render_field(form.num_children, class="form-select") }}
+            </div>
+        </div>
+        
+        {{ render_field(form.package_type, class="form-select") }}
+        {{ render_field(form.interests, class="form-control", rows=3) }}
+        {{ render_field(form.budget_preference, class="form-select") }}
+        {{ render_field(form.message, class="form-control", rows=5) }}
+
+        <div class="text-center mt-4">
+            {{ form.submit(class="btn btn-primary btn-lg") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const travelDatesFlexibleSelect = document.getElementById('travel_dates_flexible');
+    const preferredStartDateField = document.getElementById('preferred_start_date'); // Assuming WTForms generates this ID
+    const preferredEndDateField = document.getElementById('preferred_end_date');   // Assuming WTForms generates this ID
+
+    function toggleDateFields() {
+        if (preferredStartDateField && preferredEndDateField) {
+            // Check the value of the select field (it's 'True' or 'False' as strings from coerce)
+            if (travelDatesFlexibleSelect && travelDatesFlexibleSelect.value === 'False') { // 'False' means specific dates
+                preferredStartDateField.closest('.form-group').style.display = 'block';
+                preferredEndDateField.closest('.form-group').style.display = 'block';
+                 if(preferredStartDateField.hasAttribute('required')) preferredStartDateField.setAttribute('required', 'required'); else preferredStartDateField.required = true;
+                 if(preferredEndDateField.hasAttribute('required')) preferredEndDateField.setAttribute('required', 'required'); else preferredEndDateField.required = true;
+            } else {
+                preferredStartDateField.closest('.form-group').style.display = 'block'; // Keep visible but not required
+                preferredEndDateField.closest('.form-group').style.display = 'block'; // Keep visible but not required
+                if(preferredStartDateField.hasAttribute('required')) preferredStartDateField.removeAttribute('required'); else preferredStartDateField.required = false;
+                if(preferredEndDateField.hasAttribute('required')) preferredEndDateField.removeAttribute('required'); else preferredEndDateField.required = false;
+            }
+        }
+    }
+
+    if (travelDatesFlexibleSelect) {
+        toggleDateFields(); // Initial check
+        travelDatesFlexibleSelect.addEventListener('change', toggleDateFields);
+    }
+});
+</script>
+{% endblock %} 

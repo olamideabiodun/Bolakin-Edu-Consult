@@ -76,8 +76,8 @@
                             <div class="card mb-3">
                                 <div class="card-body">
                                     <h6 class="card-title">ID Document</h6>
-                                    <p class="card-text small">{{ application.id_document.split('/')[-1] }}</p>
-                                    <a href="{{ url_for('static', filename=application.id_document) }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <p class="card-text small">{{ application.id_document.split('/')[-1] if application.id_document else '' }}</p>
+                                    <a href="{{ url_for('main.uploaded_file', subpath=application.id_document) }}" class="btn btn-sm btn-primary" target="_blank">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                 </div>
@@ -95,8 +95,8 @@
                             <div class="card mb-3">
                                 <div class="card-body">
                                     <h6 class="card-title">Transcript</h6>
-                                    <p class="card-text small">{{ application.transcript.split('/')[-1] }}</p>
-                                    <a href="{{ url_for('static', filename=application.transcript) }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <p class="card-text small">{{ application.transcript.split('/')[-1] if application.transcript else '' }}</p>
+                                    <a href="{{ url_for('main.uploaded_file', subpath=application.transcript) }}" class="btn btn-sm btn-primary" target="_blank">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                 </div>
@@ -114,8 +114,8 @@
                             <div class="card mb-3">
                                 <div class="card-body">
                                     <h6 class="card-title">Passport Photo</h6>
-                                    <p class="card-text small">{{ application.passport_photo.split('/')[-1] }}</p>
-                                    <a href="{{ url_for('static', filename=application.passport_photo) }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <p class="card-text small">{{ application.passport_photo.split('/')[-1] if application.passport_photo else '' }}</p>
+                                    <a href="{{ url_for('main.uploaded_file', subpath=application.passport_photo) }}" class="btn btn-sm btn-primary" target="_blank">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                 </div>
@@ -142,6 +142,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('admin.update_application_status', id=application.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label for="status" class="form-label">Status</label>
                         <select class="form-select" id="status" name="status" required>

@@ -1,10 +1,13 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_from_directory
 from flask_login import login_required, current_user
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, cast, Date
 from werkzeug.utils import secure_filename
-from models import db, User, Subscriber, AdmissionApplication, Newsletter, NewsletterDelivery, PageVisit
+from models import db, User, Subscriber, AdmissionApplication, Newsletter, NewsletterDelivery, PageVisit, BlogPost, BlogCategory, BlogComment, UserSession, VisaRequest, FlightBookingRequest, ProofOfFundsRequest, HolidayPackageRequest, HotelAccommodationRequest
 from forms.newsletter_form import NewsletterForm
-from datetime import datetime, timedelta
+from forms.blog_forms import BlogPostForm, BlogCategoryForm, BlogCommentForm
+from forms.admin_forms import AdminUserUpdateForm
+from forms.service_forms import UpdateVisaRequestStatusForm, UpdateFlightBookingRequestStatusForm, UpdateProofOfFundsRequestStatusForm, UpdateHolidayPackageRequestStatusForm, UpdateHotelAccommodationRequestStatusForm
+from datetime import datetime, timedelta, date as datetime_date
 import os
 import csv
 import smtplib
@@ -13,6 +16,8 @@ from email.mime.text import MIMEText
 from functools import wraps
 import io
 import json
+import re
+from unicodedata import normalize
 
 admin = Blueprint('admin', __name__)
 
@@ -60,19 +65,25 @@ def dashboard():
         func.date(PageVisit.timestamp)
     ).order_by(func.date(PageVisit.timestamp)).all()
     
-    # Format for chart - handle both string and datetime types
+    # Format for chart
     visit_dates = []
-    visit_counts = []
-    
     for visit in daily_visits:
-        # Check if visit.date is already a string
         if isinstance(visit.date, str):
-            visit_dates.append(visit.date)
-        else:
-            # It's a datetime object, use strftime
+            try:
+                # Assuming visit.date is in 'YYYY-MM-DD' format from func.date()
+                dt_obj = datetime.strptime(visit.date, '%Y-%m-%d').date()
+                visit_dates.append(dt_obj.strftime('%Y-%m-%d'))
+            except ValueError:
+                current_app.logger.warning(f"Could not parse date string: {visit.date} in analytics. Using as is.")
+                visit_dates.append(visit.date) # Use the string directly if parsing fails
+        elif hasattr(visit.date, 'strftime'): # It's already a date/datetime object
             visit_dates.append(visit.date.strftime('%Y-%m-%d'))
-        
-        visit_counts.append(visit.count)
+        else:
+            # Handle unexpected type or log an error
+            current_app.logger.warning(f"Unexpected type for visit.date: {type(visit.date)}, value: {visit.date}")
+            visit_dates.append(str(visit.date)) # Fallback to string conversion
+
+    visit_counts = [visit.count for visit in daily_visits]
     
     # Top pages in the last 30 days
     top_pages = db.session.query(
@@ -309,21 +320,44 @@ def newsletters():
 def create_newsletter():
     """Create a new newsletter"""
     form = NewsletterForm()
-    
+    current_app.logger.info(f"Accessing create_newsletter. Method: {request.method}")
+
+    if request.method == 'POST':
+        current_app.logger.info(f"POST request to create_newsletter. Form data: {request.form}")
+        current_app.logger.info(f"Form submitted: {form.is_submitted()}")
+        # It's useful to see if individual validation steps pass
+        # For example, check a specific field:
+        # current_app.logger.info(f"Subject valid: {form.subject.validate(form)}")
+        
+        # WTForms' validate_on_submit() checks both is_submitted() and validate()
+        # Let's log before and after, and the errors if validate() fails.
+        current_app.logger.info("Calling form.validate_on_submit()")
+        
+        # To see detailed errors, we can call validate() and check form.errors
+        # form.validate() # Calling this separately might interfere if not careful
+        # current_app.logger.info(f"Form errors after validate(): {form.errors}")
+
     if form.validate_on_submit():
+        current_app.logger.info("form.validate_on_submit() was True.")
+        # If status is 'Send Now', we'll save it as 'Draft' first, then redirect to send confirmation.
+        actual_status_to_save = 'Draft' if form.status.data == 'Send Now' else form.status.data
+
         newsletter = Newsletter(
             subject=form.subject.data,
             content=form.content.data,
-            status=form.status.data,
-            created_by=current_user.id
+            status=actual_status_to_save, # Use adjusted status
+            creator_id=current_user.id # Assuming creator_id is the correct field for the user
         )
         
-        if form.status.data == 'Scheduled' and form.scheduled_at.data:
+        if actual_status_to_save == 'Scheduled' and form.scheduled_at.data:
             newsletter.scheduled_at = form.scheduled_at.data
         
         try:
+            current_app.logger.info(f"Attempting to add newsletter to session: Subject - {newsletter.subject}, Status - {newsletter.status}")
             db.session.add(newsletter)
+            current_app.logger.info("Attempting to commit session.")
             db.session.commit()
+            current_app.logger.info("Commit successful.")
             
             flash(f'Newsletter "{form.subject.data}" has been created.', 'success')
             
@@ -334,8 +368,11 @@ def create_newsletter():
             return redirect(url_for('admin.newsletters'))
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Error creating newsletter: {str(e)}")
+            current_app.logger.error(f"Error creating newsletter: {str(e)}", exc_info=True) # Add exc_info for full traceback
             flash('An error occurred. Please try again.', 'danger')
+    else:
+        if request.method == 'POST': # Only log errors if it was a POST request that failed validation
+            current_app.logger.warning(f"form.validate_on_submit() was False. Errors: {form.errors}")
     
     return render_template('admin/newsletter_form.html', form=form, title='Create Newsletter')
 
@@ -354,11 +391,14 @@ def edit_newsletter(id):
     form = NewsletterForm(obj=newsletter)
     
     if form.validate_on_submit():
+        # If status is 'Send Now', we'll treat it as 'Draft' for saving, then redirect.
+        actual_status_to_save = 'Draft' if form.status.data == 'Send Now' else form.status.data
+
         newsletter.subject = form.subject.data
         newsletter.content = form.content.data
-        newsletter.status = form.status.data
+        newsletter.status = actual_status_to_save # Use adjusted status
         
-        if form.status.data == 'Scheduled' and form.scheduled_at.data:
+        if actual_status_to_save == 'Scheduled' and form.scheduled_at.data:
             newsletter.scheduled_at = form.scheduled_at.data
         
         try:
@@ -400,20 +440,20 @@ def send_newsletter(id):
         return redirect(url_for('admin.newsletters'))
     
     if request.method == 'POST':
-        # Get all active subscribers
         active_subscribers = Subscriber.query.filter_by(is_active=True).all()
         
         if not active_subscribers:
             flash('No active subscribers to send to.', 'warning')
-            return redirect(url_for('admin.newsletters'))
-        
-        # Batch size to avoid overwhelming SMTP server
-        batch_size = 50
+            # Redirect back to the confirmation page if no subscribers
+            return redirect(url_for('admin.send_newsletter', id=newsletter.id))
         
         try:
-            newsletter.status = 'Sending'
-            db.session.commit()
+            newsletter.status = 'Sending' # Set status to Sending
+            db.session.commit() # Commit status change
             
+            # Define batch_size here
+            batch_size = 50 
+
             smtp_server = current_app.config['MAIL_SERVER']
             smtp_port = current_app.config['MAIL_PORT']
             smtp_username = current_app.config['MAIL_USERNAME']
@@ -467,11 +507,17 @@ def send_newsletter(id):
                 return redirect(url_for('admin.newsletters'))
                 
         except Exception as e:
-            db.session.rollback()
+            db.session.rollback() # Rollback any partial changes from the try block
+            # Revert status to Draft on error to allow retrying/editing
+            newsletter.status = 'Draft' 
+            db.session.commit() # Commit the status revert
+
             current_app.logger.error(f"Error sending newsletter: {str(e)}")
             flash('An error occurred while sending the newsletter. Please try again.', 'danger')
+            # Redirect back to the send confirmation page to show the error
+            return redirect(url_for('admin.send_newsletter', id=newsletter.id))
     
-    # Count active subscribers
+    # For GET request (loading the confirmation page)
     active_count = Subscriber.query.filter_by(is_active=True).count()
     
     return render_template('admin/send_newsletter.html', 
@@ -549,7 +595,23 @@ def analytics():
     ).order_by(func.date(PageVisit.timestamp)).all()
     
     # Format for chart
-    visit_dates = [visit.date.strftime('%Y-%m-%d') for visit in daily_visits]
+    visit_dates = []
+    for visit in daily_visits:
+        if isinstance(visit.date, str):
+            try:
+                # Assuming visit.date is in 'YYYY-MM-DD' format from func.date()
+                dt_obj = datetime.strptime(visit.date, '%Y-%m-%d').date()
+                visit_dates.append(dt_obj.strftime('%Y-%m-%d'))
+            except ValueError:
+                current_app.logger.warning(f"Could not parse date string: {visit.date} in analytics. Using as is.")
+                visit_dates.append(visit.date) # Use the string directly if parsing fails
+        elif hasattr(visit.date, 'strftime'): # It's already a date/datetime object
+            visit_dates.append(visit.date.strftime('%Y-%m-%d'))
+        else:
+            # Handle unexpected type or log an error
+            current_app.logger.warning(f"Unexpected type for visit.date: {type(visit.date)}, value: {visit.date}")
+            visit_dates.append(str(visit.date)) # Fallback to string conversion
+
     visit_counts = [visit.count for visit in daily_visits]
     
     # Top pages
@@ -575,14 +637,17 @@ def analytics():
         PageVisit.referrer
     ).order_by(desc('count')).limit(10).all()
     
+    raw_visit_counts = [visit.count for visit in daily_visits] # Renamed from visit_counts to avoid clash
+
     return render_template('admin/analytics.html',
                           total_visits=total_visits,
                           unique_visitors=unique_visitors,
                           days=days,
                           start_date=start_date.strftime('%Y-%m-%d'),
                           end_date=end_date.strftime('%Y-%m-%d'),
-                          visit_dates=json.dumps(visit_dates),
-                          visit_counts=json.dumps(visit_counts),
+                          visit_dates_json=json.dumps(visit_dates), # Changed from visit_dates
+                          visit_counts_json=json.dumps(raw_visit_counts), # Changed from visit_counts
+                          visit_counts_raw=raw_visit_counts, # Added for direct sum
                           top_pages=top_pages,
                           top_referrers=top_referrers)
 
@@ -641,48 +706,80 @@ def create_user():
 def edit_user(id):
     """Edit an existing user"""
     user = User.query.get_or_404(id)
-    
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        is_admin = request.form.get('is_admin') == 'on'
-        new_password = request.form.get('new_password')
-        
-        if not username or not email:
-            flash('Username and email are required.', 'danger')
-            return redirect(url_for('admin.edit_user', id=id))
-        
+    form = AdminUserUpdateForm(obj=user)
+
+    if form.validate_on_submit():
         # Check if username already exists (for a different user)
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user and existing_user.id != id:
+        existing_user_by_username = User.query.filter(User.username == form.username.data, User.id != id).first()
+        if existing_user_by_username:
             flash('Username already exists.', 'danger')
-            return redirect(url_for('admin.edit_user', id=id))
+            return render_template('admin/user_form.html', form=form, user=user, title='Edit User')
         
         # Check if email already exists (for a different user)
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user and existing_user.id != id:
+        existing_user_by_email = User.query.filter(User.email == form.email.data, User.id != id).first()
+        if existing_user_by_email:
             flash('Email already exists.', 'danger')
-            return redirect(url_for('admin.edit_user', id=id))
-        
-        # Update user
-        user.username = username
-        user.email = email
-        user.is_admin = is_admin
-        
-        # Update password if provided
-        if new_password:
-            user.set_password(new_password)
+            return render_template('admin/user_form.html', form=form, user=user, title='Edit User')
+
+        user.username = form.username.data
+        user.email = form.email.data
+        user.is_admin = form.is_admin.data
+
+        # Update social media handles
+        user.linkedin_url = form.linkedin_url.data
+        user.twitter_url = form.twitter_url.data
+        user.instagram_url = form.instagram_url.data
+        user.facebook_url = form.facebook_url.data
+
+        # Handle profile picture upload
+        if form.profile_image.data:
+            # Define profile picture upload folder
+            profile_pics_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'profile_pics')
+            os.makedirs(profile_pics_folder, exist_ok=True)
+
+            # Delete old profile picture if it exists
+            if user.profile_image_file:
+                old_pic_path = os.path.join(profile_pics_folder, os.path.basename(user.profile_image_file))
+                if os.path.exists(old_pic_path):
+                    try:
+                        os.remove(old_pic_path)
+                    except Exception as e:
+                        current_app.logger.error(f"Error deleting old profile picture {old_pic_path}: {str(e)}")
+            
+            # Save the new profile picture
+            picture_file = form.profile_image.data
+            picture_filename = secure_filename(f"user_{user.id}_{picture_file.filename}")
+            picture_path = os.path.join(profile_pics_folder, picture_filename)
+            
+            try:
+                picture_file.save(picture_path)
+                # Store relative path from UPLOADS_FOLDER for consistency with other uploads if served via a common route
+                # e.g., profile_pics/user_1_my_pic.jpg
+                user.profile_image_file = os.path.join('profile_pics', picture_filename).replace('\\', '/')
+            except Exception as e:
+                current_app.logger.error(f"Error saving profile picture: {str(e)}")
+                flash('Error uploading profile picture. Please try again.', 'danger')
         
         try:
             db.session.commit()
-            flash(f'User {username} has been updated.', 'success')
+            flash(f'User {user.username} has been updated.', 'success')
             return redirect(url_for('admin.users'))
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error updating user: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
     
-    return render_template('admin/user_form.html', user=user, title='Edit User')
+    # For GET requests, pass the form to the template
+    form.username.data = user.username
+    form.email.data = user.email
+    form.is_admin.data = user.is_admin
+    # Populate form with existing social media handles
+    form.linkedin_url.data = user.linkedin_url
+    form.twitter_url.data = user.twitter_url
+    form.instagram_url.data = user.instagram_url
+    form.facebook_url.data = user.facebook_url
+
+    return render_template('admin/user_form.html', form=form, user=user, title="Edit User")
 
 @admin.route('/users/<int:id>/delete', methods=['POST'])
 @login_required
@@ -820,11 +917,8 @@ def blog_posts():
         error_out=False
     )
     
-    posts = pagination.items
-    
     return render_template('admin/blog/posts.html', 
-                          posts=posts,
-                          pagination=pagination,
+                          posts=pagination,
                           status=status)
 
 
@@ -849,7 +943,7 @@ def create_blog_post():
         existing_post = BlogPost.query.filter_by(slug=slug).first()
         if existing_post:
             flash('A post with this slug already exists. Please choose a different slug.', 'danger')
-            return render_template('admin/blog/form.html', form=form, title='Create Post')
+            return render_template('admin/blog/create_edit_post.html', form=form, title='Create Post')
         
         # Handle featured image upload
         featured_image_path = None
@@ -858,19 +952,34 @@ def create_blog_post():
                 uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog')
                 os.makedirs(uploads_folder, exist_ok=True)
                 
-                # Save the file
                 filename = secure_filename(form.featured_image.data.filename)
                 timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-                filename = f"{timestamp}_{filename}"
+                filename = f"{timestamp}_feat_{filename}"
                 
                 filepath = os.path.join(uploads_folder, filename)
                 form.featured_image.data.save(filepath)
-                
-                # Store the relative path
-                featured_image_path = os.path.join('uploads', 'blog', filename)
+                featured_image_path = os.path.join('blog', filename) # Store path relative to UPLOADS_FOLDER
             except Exception as e:
                 current_app.logger.error(f"Error uploading featured image: {str(e)}")
-                flash('Error uploading image. Please try again.', 'danger')
+                flash('Error uploading featured image. Please try again.', 'danger')
+
+        # Handle hero background image upload
+        hero_background_image_path = None
+        if form.hero_background_image.data:
+            try:
+                hero_uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog', 'hero_backgrounds')
+                os.makedirs(hero_uploads_folder, exist_ok=True)
+                
+                hero_filename = secure_filename(form.hero_background_image.data.filename)
+                hero_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                hero_filename = f"{hero_timestamp}_hero_{hero_filename}"
+                
+                hero_filepath = os.path.join(hero_uploads_folder, hero_filename)
+                form.hero_background_image.data.save(hero_filepath)
+                hero_background_image_path = os.path.join('blog', 'hero_backgrounds', hero_filename) # Store path relative to UPLOADS_FOLDER
+            except Exception as e:
+                current_app.logger.error(f"Error uploading hero background image: {str(e)}")
+                flash('Error uploading hero background image. Please try again.', 'danger')
         
         # Create blog post
         post = BlogPost(
@@ -879,6 +988,7 @@ def create_blog_post():
             excerpt=form.excerpt.data,
             content=form.content.data,
             featured_image=featured_image_path,
+            hero_background_image=hero_background_image_path,
             is_published=form.is_published.data,
             author_id=current_user.id
         )
@@ -892,13 +1002,28 @@ def create_blog_post():
             db.session.add(post)
             db.session.commit()
             flash('Blog post created successfully!', 'success')
+
+            # Send notification to subscribers if post is published
+            if post.is_published:
+                try:
+                    active_subscribers = Subscriber.query.filter_by(is_active=True).all()
+                    if active_subscribers:
+                        subscriber_emails = [s.email for s in active_subscribers]
+                        send_new_post_notification(post, subscriber_emails)
+                        flash(f'Notification sent to {len(subscriber_emails)} subscribers.', 'info')
+                    else:
+                        flash('Post created and published, but no active subscribers to notify.', 'info')
+                except Exception as e:
+                    current_app.logger.error(f"Error sending new post notification: {str(e)}")
+                    flash('Blog post created, but failed to send notifications to subscribers.', 'warning')
+
             return redirect(url_for('admin.blog_posts'))
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error creating blog post: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
     
-    return render_template('admin/blog/form.html', form=form, title='Create Blog Post')
+    return render_template('admin/blog/create_edit_post.html', form=form, title='Create Blog Post')
 
 
 @admin.route('/blog/<int:id>/edit', methods=['GET', 'POST'])
@@ -926,7 +1051,7 @@ def edit_blog_post(id):
             existing_post = BlogPost.query.filter_by(slug=form.slug.data).first()
             if existing_post and existing_post.id != post.id:
                 flash('A post with this slug already exists. Please choose a different slug.', 'danger')
-                return render_template('admin/blog/form.html', form=form, post=post, title='Edit Blog Post')
+                return render_template('admin/blog/create_edit_post.html', form=form, post=post, title='Edit Blog Post')
         
         # Handle featured image upload
         if form.featured_image.data:
@@ -934,26 +1059,43 @@ def edit_blog_post(id):
                 uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog')
                 os.makedirs(uploads_folder, exist_ok=True)
                 
-                # Save the file
                 filename = secure_filename(form.featured_image.data.filename)
                 timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-                filename = f"{timestamp}_{filename}"
+                filename = f"{timestamp}_feat_{filename}"
                 
                 filepath = os.path.join(uploads_folder, filename)
                 form.featured_image.data.save(filepath)
-                
-                # Delete old image if exists
-                if post.featured_image and os.path.exists(post.featured_image):
-                    try:
-                        os.remove(post.featured_image)
-                    except Exception as e:
-                        current_app.logger.error(f"Error deleting old image: {str(e)}")
-                
-                # Store the relative path
-                post.featured_image = os.path.join('uploads', 'blog', filename)
+                # Delete old image if exists and new one is uploaded
+                if post.featured_image:
+                    old_image_path = os.path.join(current_app.config['UPLOADS_FOLDER'], post.featured_image)
+                    if os.path.exists(old_image_path):
+                        try: os.remove(old_image_path)
+                        except Exception as e: current_app.logger.error(f"Error deleting old featured image: {str(e)}")
+                post.featured_image = os.path.join('blog', filename)
             except Exception as e:
                 current_app.logger.error(f"Error uploading featured image: {str(e)}")
-                flash('Error uploading image. The post will be updated without changing the image.', 'warning')
+                flash('Error uploading featured image. The post will be updated without changing the featured image.', 'warning')
+        
+        # Handle hero background image upload
+        if form.hero_background_image.data:
+            try:
+                hero_uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog', 'hero_backgrounds')
+                os.makedirs(hero_uploads_folder, exist_ok=True)
+                hero_filename = secure_filename(form.hero_background_image.data.filename)
+                hero_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                hero_filename = f"{hero_timestamp}_hero_{hero_filename}"
+                hero_filepath = os.path.join(hero_uploads_folder, hero_filename)
+                form.hero_background_image.data.save(hero_filepath)
+                # Delete old hero image if exists and new one is uploaded
+                if post.hero_background_image:
+                    old_hero_image_path = os.path.join(current_app.config['UPLOADS_FOLDER'], post.hero_background_image)
+                    if os.path.exists(old_hero_image_path):
+                        try: os.remove(old_hero_image_path)
+                        except Exception as e: current_app.logger.error(f"Error deleting old hero image: {str(e)}")
+                post.hero_background_image = os.path.join('blog', 'hero_backgrounds', hero_filename)
+            except Exception as e:
+                current_app.logger.error(f"Error uploading hero background image: {str(e)}")
+                flash('Error uploading hero background image. The post will be updated without changing the hero image.', 'warning')
         
         # Update post data
         post.title = form.title.data
@@ -978,7 +1120,7 @@ def edit_blog_post(id):
             current_app.logger.error(f"Error updating blog post: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
     
-    return render_template('admin/blog/form.html', form=form, post=post, title='Edit Blog Post')
+    return render_template('admin/blog/create_edit_post.html', form=form, post=post, title='Edit Blog Post')
 
 
 @admin.route('/blog/<int:id>/delete', methods=['POST'])
@@ -1013,9 +1155,32 @@ def delete_blog_post(id):
 @login_required
 @admin_required
 def blog_categories():
-    """List all blog categories"""
-    categories = BlogCategory.query.order_by(BlogCategory.name).all()
-    return render_template('admin/blog/categories.html', categories=categories)
+    """List all blog categories and provide form for creation/editing."""
+    from forms.blog_forms import BlogCategoryForm # Import here
+    
+    edit_id = request.args.get('edit_id', type=int)
+    category_to_edit = None
+    
+    if edit_id:
+        category_to_edit = BlogCategory.query.get_or_404(edit_id)
+        # Populate form for editing
+        category_form = BlogCategoryForm(obj=category_to_edit)
+    else:
+        # Empty form for creating
+        category_form = BlogCategoryForm()
+
+    # For listing existing categories
+    page = request.args.get('page', 1, type=int)
+    categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+        page=page,
+        per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), 
+        error_out=False
+    )
+    
+    return render_template('admin/blog/categories.html', 
+                           categories=categories_pagination, 
+                           category_form=category_form, # Pass the form
+                           editing_category=category_to_edit)
 
 
 @admin.route('/blog/categories/create', methods=['GET', 'POST'])
@@ -1025,19 +1190,61 @@ def create_blog_category():
     """Create a new blog category"""
     from forms.blog_forms import BlogCategoryForm
     
-    form = BlogCategoryForm()
+    form = BlogCategoryForm() # This is for POST, GET is handled by blog_categories
     
     if form.validate_on_submit():
-        # Check for duplicate slug
-        existing_category = BlogCategory.query.filter_by(slug=form.slug.data).first()
-        if existing_category:
-            flash('A category with this slug already exists. Please choose a different slug.', 'danger')
-            return render_template('admin/blog/category_form.html', form=form, title='Create Category')
+        name = form.name.data.strip()
+        slug = form.slug.data.strip() if form.slug.data.strip() else slugify(name)
+
+        if not name: # Should be caught by DataRequired, but as an extra check
+            flash('Category name cannot be empty.', 'danger')
+            # Re-render form (copied from below, consider refactoring this re-render logic)
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=None)
+
+        if not slug: # Check if slugify resulted in an empty string
+            flash('Could not generate a valid slug from the category name. Please provide a valid name or a manual slug.', 'danger')
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=None)
+
+        # Check for duplicate name or slug
+        existing_by_name = BlogCategory.query.filter_by(name=name).first()
+        existing_by_slug = BlogCategory.query.filter_by(slug=slug).first()
         
-        # Create category
+        error_found = False
+        if existing_by_name:
+            flash(f'A category with the name \\"{name}\\" already exists.', 'danger')
+            error_found = True
+        if existing_by_slug and slug:
+             flash(f'A category with the slug \\"{slug}\\" already exists.', 'danger')
+             error_found = True
+
+        if error_found:
+            # If errors, re-render the main categories page with the form containing errors
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=None)
+
         category = BlogCategory(
-            name=form.name.data,
-            slug=form.slug.data,
+            name=name,
+            slug=slug,
             description=form.description.data
         )
         
@@ -1050,8 +1257,32 @@ def create_blog_category():
             db.session.rollback()
             current_app.logger.error(f"Error creating category: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
+            # Re-render the main categories page if save fails
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=None)
     
-    return render_template('admin/blog/category_form.html', form=form, title='Create Category')
+    # If GET request, or POST failed basic validation (handled by WTForms on template)
+    # redirect to the main categories view which handles displaying the form correctly.
+    # This assumes the form on categories.html points its POST to this route.
+    # For simplicity if GET, show the form on the main categories page.
+    # A more robust way is to have blog_categories handle GET for the form,
+    # and this route only handle POST.
+    
+    # If it's a GET request to /create, it's better to show the form on the categories page itself.
+    # For now, if validate_on_submit is false (e.g. initial GET or WTForms error), show the main page.
+    # The form's action in categories.html should point to this create_blog_category route for POST.
+    page = request.args.get('page', 1, type=int)
+    categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+        page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+    )
+    # Pass the current form (which might have errors)
+    return render_template('admin/blog/categories.html', categories=categories_pagination, category_form=form, editing_category=None)
 
 
 @admin.route('/blog/categories/<int:id>/edit', methods=['GET', 'POST'])
@@ -1062,19 +1293,64 @@ def edit_blog_category(id):
     from forms.blog_forms import BlogCategoryForm
     
     category = BlogCategory.query.get_or_404(id)
-    form = BlogCategoryForm(obj=category)
+    form = BlogCategoryForm(obj=category) # Populate with existing data for GET
     
-    if form.validate_on_submit():
-        # Check if slug changed and if new slug is unique
-        if form.slug.data != category.slug:
-            existing_category = BlogCategory.query.filter_by(slug=form.slug.data).first()
-            if existing_category:
-                flash('A category with this slug already exists. Please choose a different slug.', 'danger')
-                return render_template('admin/blog/category_form.html', form=form, category=category, title='Edit Category')
+    if form.validate_on_submit(): # This is for POST
+        new_name = form.name.data.strip()
+        new_slug = form.slug.data.strip() if form.slug.data.strip() else slugify(new_name)
+
+        if not new_name: # Should be caught by DataRequired
+            flash('Category name cannot be empty.', 'danger')
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=category)
+
+        if not new_slug: # Check if slugify resulted in an empty string
+            flash('Could not generate a valid slug from the category name. Please provide a valid name or a manual slug.', 'danger')
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=category)
+
+
+        # Check if new name or slug conflicts with others
+        query_name = BlogCategory.query.filter_by(name=new_name).filter(BlogCategory.id != id)
+        query_slug = BlogCategory.query.filter_by(slug=new_slug).filter(BlogCategory.id != id)
         
-        # Update category
-        category.name = form.name.data
-        category.slug = form.slug.data
+        existing_by_name = query_name.first()
+        existing_by_slug = query_slug.first()
+
+        error_found = False
+        if existing_by_name:
+            flash(f'Another category with the name \\"{new_name}\\" already exists.', 'danger')
+            error_found = True
+        if existing_by_slug and new_slug:
+             flash(f'Another category with the slug \\"{new_slug}\\" already exists.', 'danger')
+             error_found = True
+        
+        if error_found:
+            # If errors, re-render the main categories page with the form containing errors
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            # Pass the current form (with errors) and the category being edited
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=category)
+
+        category.name = new_name
+        category.slug = new_slug
         category.description = form.description.data
         
         try:
@@ -1085,8 +1361,29 @@ def edit_blog_category(id):
             db.session.rollback()
             current_app.logger.error(f"Error updating category: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
+            # Re-render the main categories page if save fails
+            page = request.args.get('page', 1, type=int)
+            categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+                page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+            )
+            return render_template('admin/blog/categories.html', 
+                                   categories=categories_pagination, 
+                                   category_form=form, 
+                                   editing_category=category)
     
-    return render_template('admin/blog/category_form.html', form=form, category=category, title='Edit Category')
+    # For GET request, the main blog_categories route now handles displaying the form.
+    # This route (/edit) is primarily for the POST action of an edit.
+    # For a GET to /edit, it's better to redirect to blog_categories with edit_id.
+    if request.method == 'GET':
+        return redirect(url_for('admin.blog_categories', edit_id=id, page=request.args.get('page',1)))
+
+    # Fallback if POST but not validate_on_submit (e.g. CSRF error, though unlikely with hidden_tag)
+    # Or if somehow reached with GET despite the redirect above.
+    page = request.args.get('page', 1, type=int)
+    categories_pagination = BlogCategory.query.order_by(BlogCategory.name).paginate(
+        page=page, per_page=current_app.config.get('ITEMS_PER_PAGE_SMALL', 10), error_out=False
+    )
+    return render_template('admin/blog/categories.html', categories=categories_pagination, category_form=form, editing_category=category)
 
 
 @admin.route('/blog/categories/<int:id>/delete', methods=['POST'])
@@ -1183,3 +1480,421 @@ def delete_comment(id):
         flash('An error occurred. Please try again.', 'danger')
     
     return redirect(url_for('admin.blog_comments'))
+
+def send_new_post_notification(post, recipients):
+    """Sends an email notification to a list of recipients about a new blog post."""
+    if not recipients:
+        return
+
+    site_name = "Bolakin Educational Consult" # Or get from config
+    post_url = url_for('main.blog_post', slug=post.slug, _external=True)
+
+    subject = f"New Blog Post: {post.title}"
+    
+    html_body = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ padding: 20px; border: 1px solid #ddd; border-radius: 5px; max-width: 600px; margin: 20px auto; }}
+            h2 {{ color: #0056b3; }}
+            p {{ margin-bottom: 10px; }}
+            .button {{
+                display: inline-block; padding: 10px 20px; margin-top:15px; 
+                background-color: #FF9933; color: #ffffff; text-decoration: none; border-radius: 5px;
+            }}
+            .footer {{ font-size: 0.9em; color: #777; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>New Blog Post on {site_name}!</h2>
+            <p>Hello,</p>
+            <p>We've just published a new article that you might find interesting:</p>
+            <h3>{post.title}</h3>
+            
+            <p>{post.excerpt if post.excerpt else 'Click below to read more.'}</p>
+            
+            <a href="{post_url}" class="button">Read Full Article</a>
+            
+            <div class="footer">
+                <p>You are receiving this email because you subscribed to updates from {site_name}.</p>
+                <!-- Consider adding a generic unsubscribe link or link to manage preferences -->
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    # Using a BCC approach for multiple recipients is better for privacy
+    # However, smtplib direct send_message usually takes one 'To'. 
+    # For multiple individual emails, loop or use a proper mailing library for batching.
+    # For now, sending one by one for simplicity, but this is not efficient for large lists.
+    
+    current_app.logger.info(f"Attempting to send new post notification for '{post.title}' to {len(recipients)} recipients.")
+    emails_sent_count = 0
+    try:
+        smtp_server = current_app.config['MAIL_SERVER']
+        smtp_port = current_app.config['MAIL_PORT']
+        smtp_username = current_app.config['MAIL_USERNAME']
+        smtp_password = current_app.config['MAIL_PASSWORD']
+        sender = current_app.config['MAIL_DEFAULT_SENDER']
+
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            for recipient_email in recipients:
+                try:
+                    msg = MIMEMultipart()
+                    msg['From'] = sender
+                    msg['To'] = recipient_email
+                    msg['Subject'] = subject
+                    msg.attach(MIMEText(html_body, 'html'))
+                    server.send_message(msg)
+                    emails_sent_count += 1
+                except Exception as e_indiv:
+                    current_app.logger.error(f"Failed to send new post email to {recipient_email}: {str(e_indiv)}")
+            current_app.logger.info(f"New post notification sent to {emails_sent_count}/{len(recipients)} recipients.")
+
+    except Exception as e_smtp:
+        current_app.logger.error(f"SMTP error during new post notification: {str(e_smtp)}")
+        raise # Re-raise to be caught by the caller to flash a general error message
+
+# slugify utility needs to be defined or imported
+# from utils.helpers import slugify # Ensure this is available
+
+# Helper for slugifying text (if not using a separate utility file)
+_punct_re = re.compile(r'[\t !"#$%&\'()*\[\],./:;<=>?@\^_`{|}~-]+')
+def slugify(text, delim='-'):
+    """Generates an ASCII-only slug."""
+    result = []
+    for word in _punct_re.split(text.lower()):
+        word = normalize('NFKD', word).encode('ascii', 'ignore').decode('utf-8')
+        if word:
+            result.append(word)
+    return delim.join(result)
+
+# Need to import re and unicodedata.normalize for slugify if defined here
+from unicodedata import normalize
+
+# Helper function to save newsletter content images
+def save_newsletter_image(file):
+    """Saves an image uploaded from the newsletter editor."""
+    try:
+        # Define a specific subfolder for newsletter content images
+        newsletter_images_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'newsletter_content_images')
+        os.makedirs(newsletter_images_folder, exist_ok=True)
+
+        # Generate a secure, unique filename
+        filename = secure_filename(file.filename)
+        # Add a timestamp or unique ID to prevent overwrites and ensure uniqueness
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f') # microseconds for better uniqueness
+        unique_filename = f"{timestamp}_{filename}"
+        
+        filepath = os.path.join(newsletter_images_folder, unique_filename)
+        file.save(filepath)
+        
+        # Return the URL path for the image
+        # This will be served by the existing 'uploaded_file' route or a similar one.
+        # The path should be relative to the UPLOADS_FOLDER.
+        # url_path = os.path.join('newsletter_content_images', unique_filename).replace('\\\\', '/') # Old way
+        # return url_for('main.uploaded_file', subpath=url_path, _external=True) # Old way
+        
+        # New way: Use the public route. It expects just the filename.
+        return url_for('main.public_newsletter_image', filename=unique_filename, _external=True)
+    except Exception as e:
+        current_app.logger.error(f"Error saving newsletter image: {str(e)}")
+        return None
+
+@admin.route('/upload_newsletter_image', methods=['POST'])
+@login_required
+@admin_required
+def upload_newsletter_image():
+    """Endpoint for Summernote image uploads."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if file:
+        # You might want to add more robust validation here (file type, size)
+        allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif'}
+        filename, ext = os.path.splitext(file.filename)
+        if ext.lower() not in allowed_extensions:
+            return jsonify({'error': 'File type not allowed'}), 400
+
+        image_url = save_newsletter_image(file)
+        if image_url:
+            # Summernote expects just the URL of the image in the response body for success
+            return image_url 
+        else:
+            return jsonify({'error': 'Could not save image'}), 500
+            
+    return jsonify({'error': 'Unknown error'}), 500
+
+# Helper function to save images uploaded via CKEditor
+def save_ckeditor_image(file):
+    """Saves an image uploaded from CKEditor's SimpleUploadAdapter."""
+    try:
+        # Define a specific subfolder for blog content images
+        blog_content_images_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog_content_images')
+        os.makedirs(blog_content_images_folder, exist_ok=True)
+
+        # Generate a secure, unique filename
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f') # microseconds for better uniqueness
+        unique_filename = f"{timestamp}_{filename}"
+        
+        filepath = os.path.join(blog_content_images_folder, unique_filename)
+        file.save(filepath)
+        
+        # Return the URL path for the image, served by a new public route
+        # This assumes a route like 'main.public_blog_content_image' will handle serving these.
+        image_url = url_for('main.public_blog_content_image', filename=unique_filename, _external=True)
+        return image_url, unique_filename
+    except Exception as e:
+        current_app.logger.error(f"Error saving CKEditor image: {str(e)}")
+        return None, None
+
+@admin.route('/upload-ckeditor-image', methods=['POST'])
+@login_required
+@admin_required
+def upload_ckeditor_image():
+    """Endpoint for CKEditor 5 SimpleUploadAdapter image uploads."""
+    file = request.files.get('upload') # CKEditor's SimpleUploadAdapter sends the file with the key 'upload'
+
+    if not file:
+        return jsonify({'error': {'message': 'No file uploaded.'}}), 400
+
+    # Basic validation (can be expanded)
+    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+    filename, ext = os.path.splitext(file.filename)
+    if ext.lower() not in allowed_extensions:
+        return jsonify({'error': {'message': 'Invalid image type.'}}), 400
+
+    # Add file size validation if needed
+    # max_size = 2 * 1024 * 1024 # 2MB
+    # if file.content_length > max_size:
+    #     return jsonify({'error': {'message': 'File too large.'}}), 400
+
+    image_url, unique_filename = save_ckeditor_image(file)
+
+    if image_url:
+        return jsonify({
+            'uploaded': 1,
+            'fileName': unique_filename,
+            'url': image_url
+        })
+    else:
+        return jsonify({'error': {'message': 'Could not save image. Check server logs.'}}), 500
+
+# Helper function to save images uploaded via Blog Post Summernote editor
+def save_blog_image(file):
+    """Saves an image uploaded from Summernote for blog posts."""
+    try:
+        # Define a specific subfolder for blog content images
+        blog_content_images_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog_content_images')
+        os.makedirs(blog_content_images_folder, exist_ok=True)
+
+        # Generate a secure, unique filename
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f') # microseconds for better uniqueness
+        unique_filename = f"{timestamp}_{filename}"
+        
+        filepath = os.path.join(blog_content_images_folder, unique_filename)
+        file.save(filepath)
+        
+        # Return the URL path for the image, served by the existing public blog content image route
+        image_url = url_for('main.public_blog_content_image', filename=unique_filename, _external=True)
+        return image_url
+    except Exception as e:
+        current_app.logger.error(f"Error saving blog image for Summernote: {str(e)}")
+        return None
+
+@admin.route('/upload-blog-image', methods=['POST'])
+@login_required
+@admin_required
+def upload_blog_image():
+    """Endpoint for Summernote image uploads in blog post editor."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in request.'}), 400 # Return JSON for Summernote to parse error
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No selected file.'}), 400
+    
+    if file:
+        # Basic validation (can be expanded)
+        allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+        filename, ext = os.path.splitext(file.filename)
+        if ext.lower() not in allowed_extensions:
+            return jsonify({'error': 'Invalid image type. Allowed: png, jpg, jpeg, gif, webp.'}), 400
+
+        # Add file size validation if needed (example: 5MB)
+        # max_size = 5 * 1024 * 1024 
+        # if file.content_length > max_size:
+        #     return jsonify({'error': 'File too large (max 5MB).'}), 400
+
+        image_url = save_blog_image(file)
+
+        if image_url:
+            # Summernote expects the URL directly in the response body for success
+            return image_url
+        else:
+            return jsonify({'error': 'Could not save image. Check server logs.'}), 500
+            
+    return jsonify({'error': 'Unknown error during blog image upload.'}), 500
+
+# Visa Requests Management
+@admin.route('/visa-requests')
+@login_required
+@admin_required
+def visa_requests_list():
+    page = request.args.get('page', 1, type=int)
+    requests = VisaRequest.query.order_by(desc(VisaRequest.submission_date)).paginate(page=page, per_page=15)
+    return render_template('admin/services/visa_requests_list.html', 
+                           title='Visa Processing Requests', 
+                           requests=requests)
+
+@admin.route('/visa-request/<int:request_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def visa_request_details(request_id):
+    visa_req = VisaRequest.query.get_or_404(request_id)
+    form = UpdateVisaRequestStatusForm(obj=visa_req)
+    if form.validate_on_submit():
+        try:
+            visa_req.status = form.status.data
+            visa_req.admin_notes = form.admin_notes.data
+            db.session.commit()
+            flash('Visa request status updated successfully.', 'success')
+            return redirect(url_for('admin.visa_requests_list'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating visa request status: {e}")
+            flash('An error occurred while updating status. Please try again.', 'danger')
+    return render_template('admin/services/visa_request_details.html', visa_req=visa_req, form=form, title="Visa Request Details")
+
+# Flight Booking Management
+@admin.route('/flight-bookings')
+@login_required
+@admin_required
+def flight_bookings_list():
+    page = request.args.get('page', 1, type=int)
+    flight_bookings = FlightBookingRequest.query.order_by(desc(FlightBookingRequest.submission_date)).paginate(
+        page=page, per_page=current_app.config.get('ITEMS_PER_PAGE', 15), error_out=False
+    )
+    return render_template('admin/services/flight_bookings_list.html', flight_bookings=flight_bookings, title="Flight Booking Requests")
+
+@admin.route('/flight-booking/<int:request_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def flight_booking_details(request_id):
+    booking_req = FlightBookingRequest.query.get_or_404(request_id)
+    form = UpdateFlightBookingRequestStatusForm(obj=booking_req)
+    if form.validate_on_submit():
+        try:
+            booking_req.status = form.status.data
+            booking_req.admin_notes = form.admin_notes.data
+            db.session.commit()
+            flash('Flight booking request status updated successfully.', 'success')
+            return redirect(url_for('admin.flight_bookings_list'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating flight booking status: {e}")
+            flash('An error occurred while updating status. Please try again.', 'danger')
+    return render_template('admin/services/flight_booking_details.html', booking_req=booking_req, form=form, title="Flight Booking Request Details")
+
+# Proof of Funds Requests Management
+@admin.route('/proof-of-funds-requests')
+@login_required
+@admin_required
+def proof_of_funds_requests_list():
+    page = request.args.get('page', 1, type=int)
+    pof_requests = ProofOfFundsRequest.query.order_by(desc(ProofOfFundsRequest.submission_date)).paginate(
+        page=page, per_page=current_app.config.get('ITEMS_PER_PAGE', 15), error_out=False
+    )
+    return render_template('admin/services/proof_of_funds_list.html', pof_requests=pof_requests, title="Proof of Funds Requests")
+
+@admin.route('/proof-of-funds-request/<int:request_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def proof_of_funds_request_details(request_id):
+    pof_req = ProofOfFundsRequest.query.get_or_404(request_id)
+    form = UpdateProofOfFundsRequestStatusForm(obj=pof_req)
+    if form.validate_on_submit():
+        try:
+            pof_req.status = form.status.data
+            pof_req.admin_notes = form.admin_notes.data
+            db.session.commit()
+            flash('Proof of Funds request status updated successfully.', 'success')
+            return redirect(url_for('admin.proof_of_funds_requests_list'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating Proof of Funds request status: {e}")
+            flash('An error occurred while updating status. Please try again.', 'danger')
+    return render_template('admin/services/proof_of_funds_details.html', pof_req=pof_req, form=form, title="Proof of Funds Request Details")
+
+# Holiday Package Requests Management
+@admin.route('/holiday-package-requests')
+@login_required
+@admin_required
+def holiday_package_requests_list():
+    page = request.args.get('page', 1, type=int)
+    package_requests = HolidayPackageRequest.query.order_by(desc(HolidayPackageRequest.submission_date)).paginate(
+        page=page, per_page=current_app.config.get('ITEMS_PER_PAGE', 15), error_out=False
+    )
+    return render_template('admin/services/holiday_package_requests_list.html', package_requests=package_requests, title="Holiday Package Requests")
+
+@admin.route('/holiday-package-request/<int:request_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def holiday_package_request_details(request_id):
+    package_req = HolidayPackageRequest.query.get_or_404(request_id)
+    form = UpdateHolidayPackageRequestStatusForm(obj=package_req)
+    if form.validate_on_submit():
+        try:
+            package_req.status = form.status.data
+            package_req.admin_notes = form.admin_notes.data
+            db.session.commit()
+            flash('Holiday Package request status updated successfully.', 'success')
+            return redirect(url_for('admin.holiday_package_requests_list'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating Holiday Package request status: {e}")
+            flash('An error occurred while updating status. Please try again.', 'danger')
+    return render_template('admin/services/holiday_package_request_details.html', package_req=package_req, form=form, title="Holiday Package Request Details")
+
+# Hotel Accommodation Requests Management
+@admin.route('/hotel-accommodation-requests')
+@login_required
+@admin_required
+def hotel_accommodation_requests_list():
+    page = request.args.get('page', 1, type=int)
+    hotel_requests = HotelAccommodationRequest.query.order_by(desc(HotelAccommodationRequest.submission_date)).paginate(
+        page=page, per_page=current_app.config.get('ITEMS_PER_PAGE', 15), error_out=False
+    )
+    return render_template('admin/services/hotel_accommodation_requests_list.html', hotel_requests=hotel_requests, title="Hotel/Accommodation Requests")
+
+@admin.route('/hotel-accommodation-request/<int:request_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def hotel_accommodation_request_details(request_id):
+    hotel_req = HotelAccommodationRequest.query.get_or_404(request_id)
+    form = UpdateHotelAccommodationRequestStatusForm(obj=hotel_req)
+    if form.validate_on_submit():
+        try:
+            hotel_req.status = form.status.data
+            hotel_req.admin_notes = form.admin_notes.data
+            db.session.commit()
+            flash('Hotel/Accommodation request status updated successfully.', 'success')
+            return redirect(url_for('admin.hotel_accommodation_requests_list'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating Hotel/Accommodation request status: {e}")
+            flash('An error occurred while updating status. Please try again.', 'danger')
+    return render_template('admin/services/hotel_accommodation_request_details.html', hotel_req=hotel_req, form=form, title="Hotel/Accommodation Request Details")

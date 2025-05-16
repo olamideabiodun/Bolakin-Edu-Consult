@@ -9,6 +9,7 @@
         </div>
         
         <form id="admissionForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <!-- Personal Information Section -->
             <div class="form-section">
                 <h3>Personal Information</h3>

@@ -125,6 +125,11 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     }
     
+    /* This is where the main blog post content will be rendered */
+    .blog-post-content .actual-content-wrapper {
+        /* Styles for the wrapper if needed, or just render post.content directly */
+    }
+
     .blog-post-content p {
         color: #555;
         font-size: 17px;
@@ -732,9 +737,9 @@
 <!-- Blog Post Hero -->
 <section class="blog-post-hero">
     {% if post.featured_image %}
-    <img src="{{ url_for('static', filename=post.featured_image) }}" alt="{{ post.title }}" class="blog-post-hero-bg">
+    <img src="{{ url_for('main.uploaded_file', subpath=post.featured_image) }}" alt="{{ post.title }}" class="blog-post-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}';">
     {% else %}
-    <img src="{{ url_for('static', filename='images/blog/hero-bg.jpg') }}" alt="{{ post.title }}" class="blog-post-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+    <img src="{{ url_for('static', filename='images/blog/hero-bg.jpg') }}" alt="{{ post.title }}" class="blog-post-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}';">
     {% endif %}
     <div class="blog-post-hero-content">
         <h1 data-aos="fade-up">{{ post.title }}</h1>
@@ -793,16 +798,21 @@
                 <!-- Author Box -->
                 <div class="author-box" data-aos="fade-up">
                     <div class="author-avatar">
-                        <img src="{{ url_for('static', filename='images/team/team1.jpg') }}" alt="Author" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                        {% if post.author and post.author.profile_image_file %}
+                            <img src="{{ url_for('main.uploaded_file', subpath=post.author.profile_image_file) }}" alt="{{ post.author.username }}" onerror="this.src='{{ url_for('static', filename='images/default_avatar.png') }}';">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Author Avatar" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}';">
+                        {% endif %}
                     </div>
                     <div class="author-info">
                         <h3>{{ post.author.username }}</h3>
-                        <p>Educational consultant with extensive knowledge in international education and study abroad programs. Passionate about helping students achieve their academic goals.</p>
+                        {# You might want a bio field on the User model for this #}
+                        <p>Blog author at Bolakin Educational Consult. Passionate about sharing insights and guiding students.</p> 
                         <div class="author-social">
-                            <a href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            {% if post.author.facebook_url %}<a href="{{ post.author.facebook_url }}" target="_blank"><i class="fab fa-facebook-f"></i></a>{% endif %}
+                            {% if post.author.twitter_url %}<a href="{{ post.author.twitter_url }}" target="_blank"><i class="fab fa-twitter"></i></a>{% endif %}
+                            {% if post.author.linkedin_url %}<a href="{{ post.author.linkedin_url }}" target="_blank"><i class="fab fa-linkedin-in"></i></a>{% endif %}
+                            {% if post.author.instagram_url %}<a href="{{ post.author.instagram_url }}" target="_blank"><i class="fab fa-instagram"></i></a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -816,9 +826,9 @@
                         <div class="related-post-card">
                             <div class="related-post-image">
                                 {% if related.featured_image %}
-                                <img src="{{ url_for('static', filename=related.featured_image) }}" alt="{{ related.title }}">
+                                <img src="{{ url_for('main.uploaded_file', subpath=related.featured_image) }}" alt="{{ related.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}';">
                                 {% else %}
-                                <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ related.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                                <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ related.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}';">
                                 {% endif %}
                             </div>
                             <div class="related-post-content">
@@ -866,62 +876,70 @@
                     <p>No comments yet. Be the first to comment!</p>
                     {% endif %}
                     
-                    <!-- Comment Form -->
-                    <div class="comment-form">
+                    <!-- Comments Form -->
+                    <div class="comment-form" data-aos="fade-up">
                         <h3>Leave a Comment</h3>
-                        <form action="{{ url_for('main.blog_post_comment', slug=post.slug) }}" method="POST">
+                        {% if current_user.is_authenticated %}
+                        <form method="POST" action="{{ url_for('main.blog_post_comment', slug=post.slug) }}">
                             {{ form.hidden_tag() }}
-                            
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="author_name">Name *</label>
-                                        {{ form.author_name(class="form-control", placeholder="Your name") }}
-                                        {% if form.author_name.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.author_name.errors %}
-                                            <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                        {% endif %}
-                                    </div>
+                                <div class="form-group" style="flex: 1; padding-right: 10px; box-sizing: border-box;">
+                                    {{ form.author_name.label(class="comment-label") }}
+                                    {{ form.author_name(class="form-control", readonly=True) }}
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="author_email">Email *</label>
-                                        {{ form.author_email(class="form-control", placeholder="Your email") }}
-                                        {% if form.author_email.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.author_email.errors %}
-                                            <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                        {% endif %}
-                                    </div>
+                                <div class="form-group" style="flex: 1; padding-left: 10px; box-sizing: border-box;">
+                                    {{ form.author_email.label(class="comment-label") }}
+                                    {{ form.author_email(class="form-control", readonly=True) }}
                                 </div>
                             </div>
-                            
                             <div class="form-group">
-                                <label for="content">Comment *</label>
-                                {{ form.content(class="form-control", placeholder="Your comment") }}
+                                {{ form.content.label(class="comment-label") }}
+                                {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), rows="5") }}
                                 {% if form.content.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.content.errors %}
-                                    <small>{{ error }}</small>
-                                    {% endfor %}
-                                </div>
+                                    <div class="invalid-feedback">
+                                        {% for error in form.content.errors %}{{ error }}{% endfor %}
+                                    </div>
                                 {% endif %}
                             </div>
-                            
                             <button type="submit" class="comment-submit">Post Comment</button>
-                            
-                            <p class="comment-notes">
-                                <small>
-                                    Your email address will not be published. Required fields are marked *. 
-                                    Comments are moderated and will appear after approval.
-                                </small>
-                            </p>
                         </form>
+                        <p class="comment-notes">Your email address will not be published. Required fields are marked *</p>
+                        {% else %}
+                         <form method="POST" action="{{ url_for('main.blog_post_comment', slug=post.slug) }}">
+                            {{ form.hidden_tag() }}
+                            <div class="row">
+                                <div class="form-group" style="flex: 1; padding-right: 10px; box-sizing: border-box;">
+                                    {{ form.author_name.label(class="comment-label") }}
+                                    {{ form.author_name(class="form-control" + (" is-invalid" if form.author_name.errors else "")) }}
+                                    {% if form.author_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.author_name.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group" style="flex: 1; padding-left: 10px; box-sizing: border-box;">
+                                    {{ form.author_email.label(class="comment-label") }}
+                                    {{ form.author_email(class="form-control" + (" is-invalid" if form.author_email.errors else "")) }}
+                                    {% if form.author_email.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.author_email.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                {{ form.content.label(class="comment-label") }}
+                                {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), rows="5") }}
+                                {% if form.content.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.content.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <button type="submit" class="comment-submit">Post Comment</button>
+                        </form>
+                        <p class="comment-notes">Your email address will not be published. Required fields are marked *</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -951,9 +969,9 @@
                     <div class="recent-post">
                         <div class="recent-post-image">
                             {% if recent.featured_image %}
-                            <img src="{{ url_for('static', filename=recent.featured_image) }}" alt="{{ recent.title }}">
+                            <img src="{{ url_for('main.uploaded_file', subpath=recent.featured_image) }}" alt="{{ recent.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}';">
                             {% else %}
-                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ recent.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ recent.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}';">
                             {% endif %}
                         </div>
                         <div class="recent-post-content">

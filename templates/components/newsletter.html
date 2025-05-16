@@ -8,6 +8,7 @@
         <div class="newsletter-form">
             <div class="unsubscribe-text">You can unsubscribe anytime you wish!</div>
             <form id="subscribeForm" method="POST" action="{{ url_for('main.subscribe') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="email" class="newsletter-input" name="email" placeholder="Enter your email" required>
                 <button type="submit" class="newsletter-btn">Subscribe</button>
             </form>

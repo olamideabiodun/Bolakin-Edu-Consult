@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">All Holiday Package Requests</h6>
+    </div>
+    <div class="card-body">
+        {% if package_requests.items %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Destination</th>
+                            <th>Package Type</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in package_requests.items %}
+                            <tr>
+                                <td>{{ req.id }}</td>
+                                <td>{{ req.full_name }}</td>
+                                <td>{{ req.email }}</td>
+                                <td>{{ req.destination }}</td>
+                                <td>{{ req.package_type if req.package_type else 'N/A' }}</td>
+                                <td>{{ req.submission_date.strftime('%Y-%m-%d %H:%M') if req.submission_date else 'N/A'}}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if req.status == 'Pending' %}bg-warning text-dark
+                                        {% elif req.status == 'Consultation Scheduled' %}bg-info text-dark
+                                        {% elif req.status == 'Itinerary Proposed' %}bg-primary
+                                        {% elif req.status == 'Package Quoted' %}bg-info
+                                        {% elif req.status == 'Awaiting Payment' %}bg-primary
+                                        {% elif req.status == 'Booked & Confirmed' %}bg-success
+                                        {% elif req.status == 'Travel Completed' %}bg-success
+                                        {% elif req.status == 'On Hold' %}bg-dark
+                                        {% elif req.status == 'Cancelled' %}bg-secondary
+                                        {% else %}bg-light text-dark{% endif %}">{{ req.status }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.holiday_package_request_details', request_id=req.id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            {% if package_requests.pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not package_requests.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.holiday_package_requests_list', page=package_requests.prev_num) }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% for page_num in package_requests.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == package_requests.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin.holiday_package_requests_list', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not package_requests.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.holiday_package_requests_list', page=package_requests.next_num) }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info">
+                No Holiday Package requests found.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+{# Add any specific JS for this page if needed #}
+{% endblock %} 

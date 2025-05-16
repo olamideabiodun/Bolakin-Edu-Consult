@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
-from flask_login import current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_from_directory
+from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
-from models import db, Subscriber, AdmissionApplication
+from models import db, Subscriber, AdmissionApplication, BlogPost, BlogCategory, BlogComment, User, VisaRequest, FlightBookingRequest, ProofOfFundsRequest, HolidayPackageRequest, HotelAccommodationRequest
 from forms.subscriber_form import SubscriberForm
 from forms.admission_form import AdmissionForm
+from forms.service_forms import VisaRequestForm, FlightBookingRequestForm, ProofOfFundsRequestForm, HolidayPackageRequestForm, HotelAccommodationRequestForm
 import os
 import tempfile
 import smtplib
@@ -12,6 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
 from flask import current_app
+from sqlalchemy import desc
 
 main = Blueprint('main', __name__)
 
@@ -86,6 +88,10 @@ def blog_post(slug):
     # Comment form
     from forms.blog_forms import BlogCommentForm
     form = BlogCommentForm()
+
+    if current_user.is_authenticated:
+        form.author_name.data = current_user.username # Or current_user.full_name if you have it
+        form.author_email.data = current_user.email
     
     # Get categories for sidebar
     categories = BlogCategory.query.all()
@@ -126,32 +132,98 @@ def blog_post(slug):
 @main.route('/blog/<string:slug>/comment', methods=['POST'])
 def blog_post_comment(slug):
     """Handle comment submission"""
-    # Get the post by slug
     post = BlogPost.query.filter_by(slug=slug, is_published=True).first_or_404()
-    
-    # Process form
     from forms.blog_forms import BlogCommentForm
     form = BlogCommentForm()
-    
-    if form.validate_on_submit():
-        comment = BlogComment(
-            content=form.content.data,
-            author_name=form.author_name.data,
-            author_email=form.author_email.data,
-            post_id=post.id,
-            is_approved=False  # Comments require approval
-        )
+
+    author_to_save = None
+    email_to_save = None
+    content_to_save = None
+    is_valid_submission = False
+    current_app.logger.info(f"Comment submission attempt for post: {slug}. Authenticated: {current_user.is_authenticated}")
+
+
+    if current_user.is_authenticated:
+        author_to_save = current_user.username
+        email_to_save = current_user.email
         
+        # For authenticated users, we primarily care about the content field.
+        # Name and email are sourced directly from current_user.
+        # We will validate form.content directly.
+        if form.content.validate(form): # Check only content validation
+            content_to_save = form.content.data
+            is_valid_submission = True
+            current_app.logger.info("Content validated successfully for authenticated user.")
+        else:
+            current_app.logger.warning(f"Content validation failed for authenticated user. Errors: {form.content.errors}")
+            # Flash content errors
+            error_messages = []
+            if form.content.errors:
+                for error in form.content.errors:
+                    error_messages.append(f"Comment content: {error}")
+            
+            # Also check other form errors, in case something unexpected happened with csrf or other form-level issues
+            # but don't let name/email validation (which we override) block submission.
+            other_errors = {k: v for k, v in form.errors.items() if k != 'content' and k != 'author_name' and k != 'author_email'}
+            if other_errors:
+                current_app.logger.warning(f"Other form errors for authenticated user: {other_errors}")
+                for field_name, field_errors in other_errors.items():
+                    label = getattr(form, field_name).label.text if hasattr(getattr(form, field_name), 'label') else field_name
+                    for error in field_errors:
+                        error_messages.append(f"{label}: {error}")
+            
+            if error_messages:
+                flash("Please correct the following errors: " + "; ".join(error_messages), 'danger')
+            else:
+                # This case implies form.content.validate(form) was false but form.content.errors was empty,
+                # and no other critical form errors. Unlikely, but possible if a validator raises StopValidation without errors.
+                flash('There was an issue with your comment submission. Please check the content.', 'danger')
+
+    else:  # Anonymous user
+        current_app.logger.info("Comment submission attempt by anonymous user.")
+        if form.validate_on_submit():
+            author_to_save = form.author_name.data
+            email_to_save = form.author_email.data
+            content_to_save = form.content.data
+            is_valid_submission = True
+            current_app.logger.info("Form validated successfully for anonymous user.")
+        else:
+            current_app.logger.warning(f"Form validation failed for anonymous user. Errors: {form.errors}")
+            # Flash all errors for anonymous user since we are redirecting
+            error_messages = []
+            for field_name, field_errors in form.errors.items():
+                label = getattr(form, field_name).label.text if hasattr(getattr(form, field_name), 'label') else field_name
+                for error in field_errors:
+                    error_messages.append(f"{label}: {error}")
+            if error_messages:
+                flash("Please correct the following errors: " + "; ".join(error_messages), 'danger')
+            else: # Should ideally not happen if validate_on_submit is false
+                flash('There was an issue with your comment. Please try again.', 'danger')
+
+    if is_valid_submission:
+        current_app.logger.info(f"Attempting to save comment: Author - {author_to_save}, Email - {email_to_save[:5]}... (masked)")
         try:
+            comment = BlogComment(
+                content=content_to_save,
+                author_name=author_to_save,
+                author_email=email_to_save,
+                post_id=post.id,
+                is_approved=False  # Comments require approval
+            )
+            current_app.logger.info("BlogComment object created. Attempting to add to session.")
             db.session.add(comment)
+            current_app.logger.info("Attempting to commit session.")
             db.session.commit()
+            current_app.logger.info("Comment saved successfully and committed to database.")
             flash('Your comment has been submitted and is pending approval.', 'success')
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Error submitting comment: {str(e)}")
-            flash('An error occurred. Please try again.', 'danger')
+            current_app.logger.error(f"Error submitting comment to database: {str(e)}", exc_info=True)
+            flash('An error occurred while submitting your comment. Please try again.', 'danger')
+    else:
+        current_app.logger.info("Comment submission was not valid. No database action taken.")
     
-    return redirect(url_for('main.blog_post', slug=slug))
+    return redirect(url_for('main.blog_post', slug=slug, _anchor='comment-form'))
 
 
 @main.route('/gallery')
@@ -163,7 +235,8 @@ def gallery():
 @main.route('/about')
 def about():
     """About page"""
-    return render_template('about.html')
+    admin_user = User.query.filter_by(is_admin=True).first()
+    return render_template('about.html', admin_user=admin_user)
 
 
 @main.route('/appointment', methods=['GET', 'POST'])
@@ -261,7 +334,7 @@ def subscribe():
         
         # Validate email
         if not email:
-            current_app.logger.warning("No email found in request")
+            current_app.logger.warning("No email found in request for /subscribe. Returning 400.")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': False, 'message': 'Email is required'}), 400
             flash('Email is required', 'error')
@@ -271,7 +344,7 @@ def subscribe():
         import re
         email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
         if not email_pattern.match(email):
-            current_app.logger.warning(f"Invalid email format: {email}")
+            current_app.logger.warning(f"Invalid email format: {email} for /subscribe. Returning 400.")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': False, 'message': 'Invalid email format'}), 400
             flash('Invalid email format', 'error')
@@ -659,10 +732,8 @@ def save_file(file, directory, filename=None):
     file.save(filepath)
     
     # Return relative path from application root
-    uploads_folder = current_app.config['UPLOADS_FOLDER']
-    relative_path = os.path.relpath(filepath, uploads_folder)
-    
-    return os.path.join(uploads_folder, relative_path)
+    path_to_store = os.path.join(os.path.basename(directory), filename)
+    return path_to_store.replace('\\', '/')
 
 # Use in the submit_admission route
 
@@ -757,19 +828,35 @@ def submit_admission():
             current_app.logger.info(f"Application saved to database with ID: {application.id}")
             
             # Send email notification to admin
-            email_sent = False
+            admin_email_sent = False
             try:
                 send_application_notification(application)
-                email_sent = True
-                current_app.logger.info(f"Notification email sent for application ID: {application.id}")
+                admin_email_sent = True
+                current_app.logger.info(f"Admin notification email sent for application ID: {application.id}")
             except Exception as e:
-                current_app.logger.error(f"Error sending notification email: {str(e)}")
-                # Continue even if email fails - the application is saved
+                current_app.logger.error(f"Error sending admin notification email: {str(e)}")
+                # Continue even if admin email fails - the application is saved
+
+            # Send confirmation email to applicant
+            applicant_email_sent = False
+            try:
+                send_applicant_confirmation(application)
+                applicant_email_sent = True
+                current_app.logger.info(f"Applicant confirmation email sent for application ID: {application.id} to {application.email}")
+            except Exception as e:
+                current_app.logger.error(f"Error sending applicant confirmation email: {str(e)}")
+                # Continue even if applicant email fails
             
             response_message = 'Application submitted successfully'
-            if not email_sent:
-                response_message += ', but there was an issue sending the notification email. Your application has been saved and will be reviewed.'
-                
+            if not admin_email_sent and not applicant_email_sent:
+                response_message += '. However, we encountered an issue sending email notifications. Your application has been saved and will be reviewed.'
+            elif not admin_email_sent:
+                response_message += '. An email confirmation has been sent to you. There was an issue notifying the admin, but your application is saved.'
+            elif not applicant_email_sent:
+                response_message += '. The admin has been notified. There was an issue sending you a confirmation email, but your application is saved.'
+            else:
+                response_message += '. An email confirmation has been sent to you, and the admin has been notified.'
+
             return jsonify({
                 'success': True, 
                 'message': response_message,
@@ -784,3 +871,318 @@ def submit_admission():
             return jsonify({'success': False, 'message': 'An error occurred while processing your application. Please try again or contact support.'})
     
     return jsonify({'success': False, 'message': 'Invalid request method'})
+
+def send_applicant_confirmation(application):
+    """Send confirmation email to applicant"""
+    msg = MIMEMultipart()
+    msg['From'] = current_app.config['MAIL_DEFAULT_SENDER']
+    msg['To'] = application.email
+    msg['Subject'] = 'Your Admission Application to Bolakin Educational Consult has been Received'
+    
+    applicant_body = f"""
+    Dear {application.full_name},
+
+    Thank you for submitting your admission application to Bolakin Educational Consult.
+
+    We have successfully received your application (ID: {application.id}) for the {application.course} program.
+    Our admissions team will review your submission carefully.
+
+    We will get back to you soon regarding the status of your application. 
+    If you have any urgent questions, please feel free to contact us.
+
+    Best regards,
+    The Bolakin Educational Consult Team
+    {current_app.config['SITE_URL']}
+    """
+    # Using HTML for better formatting, similar to other emails
+    html_applicant_body = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            h2 {{ color: #0056b3; /* Bolakin Blue */ }}
+            p {{ margin-bottom: 10px; }}
+            .footer {{ font-size: 0.9em; color: #777; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }}
+            .logo-text {{ font-weight: bold; color: #FF9933; /* Bolakin Orange */ }}
+        </style>
+    </head>
+    <body>
+        <h2>Application Received: Bolakin Educational Consult</h2>
+        <p>Dear {application.full_name},</p>
+        <p>Thank you for submitting your admission application to <span class="logo-text">Bolakin Educational Consult</span>.</p>
+        <p>We have successfully received your application (ID: <strong>{application.id}</strong>) for the <strong>{application.course}</strong> program.</p>
+        <p>Our admissions team will review your submission carefully. We appreciate your patience during this process.</p>
+        <p>We will get back to you soon regarding the status of your application. If you have any urgent questions in the meantime, please do not hesitate to contact us.</p>
+        <p>Best regards,</p>
+        <p><strong>The Bolakin Educational Consult Team</strong></p>
+        <div class="footer">
+            <p><a href="{current_app.config['SITE_URL']}">{current_app.config['SITE_URL']}</a></p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    msg.attach(MIMEText(html_applicant_body, 'html')) # Changed to html_applicant_body and 'html'
+    
+    # SMTP Sending logic (same as other email functions)
+    try:
+        smtp_server = current_app.config['MAIL_SERVER']
+        smtp_port = current_app.config['MAIL_PORT']
+        smtp_username = current_app.config['MAIL_USERNAME']
+        smtp_password = current_app.config['MAIL_PASSWORD']
+        
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+            current_app.logger.info(f"Applicant confirmation email successfully sent to {application.email}")
+    except smtplib.SMTPAuthenticationError as e:
+        current_app.logger.error(f"SMTP Authentication Error for applicant email ({application.email}): {str(e)}")
+        raise # Re-raise to be caught by the caller in submit_admission
+    except Exception as e:
+        current_app.logger.error(f"General SMTP Error for applicant email ({application.email}): {str(e)}")
+        raise # Re-raise
+
+@main.route('/uploads/<path:subpath>')
+@login_required
+def uploaded_file(subpath):
+    upload_dir_name = current_app.config['UPLOADS_FOLDER'] # This is 'uploads'
+    absolute_upload_dir = os.path.abspath(upload_dir_name)
+
+    # Normalize slashes first (e.g. db_pathile.pdf -> db_path/file.pdf)
+    normalized_subpath_slashes = subpath.replace('\\', '/')
+
+    # Use os.path.normpath to resolve any '.' or '..' segments AFTER initial slash normalization
+    # and to get OS-specific separators if needed internally by subsequent os.path calls,
+    # though for string manipulation, we'll stick to '/'
+    temp_normalized_path = os.path.normpath(normalized_subpath_slashes)
+
+    # Convert back to forward slashes for consistent string operations
+    # and remove any leading './' that normpath might produce or was already there.
+    cleaned_subpath = temp_normalized_path.replace('\\', '/').lstrip('./')
+    
+    path_for_send_from_directory = cleaned_subpath
+    
+    # Check if the cleaned_subpath (from DB) incorrectly starts with the UPLOADS_FOLDER name itself
+    # e.g., if DB has 'uploads/email_timestamp/file.pdf' instead of 'email_timestamp/file.pdf'
+    # This handles old data. New data saved by corrected save_file shouldn't have this.
+    if cleaned_subpath.startswith(upload_dir_name + '/'):
+        path_for_send_from_directory = cleaned_subpath[len(upload_dir_name + '/'):]
+    
+    # Final check: ensure path doesn't start with a slash if it's meant to be relative to absolute_upload_dir
+    path_for_send_from_directory = path_for_send_from_directory.lstrip('/')
+
+    # Security check for path traversal 
+    # (send_from_directory is generally safe, but this adds an explicit layer)
+    # Check against components to be robust
+    if '..' in path_for_send_from_directory.split('/'):
+        current_app.logger.warning(f"Path traversal attempt detected in uploaded_file. Original subpath: '{subpath}', Processed path: '{path_for_send_from_directory}'")
+        return jsonify({'success': False, 'message': 'Invalid path'}), 400
+        
+    current_app.logger.info(f"Attempting to serve file. Base directory: '{absolute_upload_dir}', Relative path: '{path_for_send_from_directory}'")
+    try:
+        return send_from_directory(absolute_upload_dir, path_for_send_from_directory, as_attachment=False)
+    except Exception as e:
+        current_app.logger.error(f"Error serving file. Base: '{absolute_upload_dir}', Path: '{path_for_send_from_directory}'. Error: {str(e)}")
+        # Consider a more specific check for NotFound from werkzeug.exceptions if you want to distinguish
+        # from other errors, though a generic 404 is often fine.
+        return jsonify({'success': False, 'message': 'File not found or an error occurred while serving the file.'}), 404
+
+# New public route for newsletter images
+@main.route('/public_uploads/newsletter_content_images/<path:filename>')
+def public_newsletter_image(filename):
+    """Serves publicly accessible images for newsletters."""
+    # Construct the correct directory path
+    # UPLOADS_FOLDER is 'uploads'. We need 'uploads/newsletter_content_images'
+    directory = os.path.join(current_app.config['UPLOADS_FOLDER'], 'newsletter_content_images')
+    absolute_directory = os.path.abspath(directory)
+    
+    current_app.logger.info(f"Attempting to serve public newsletter image. Base directory: '{absolute_directory}', Filename: '{filename}'")
+    try:
+        return send_from_directory(absolute_directory, filename, as_attachment=False)
+    except Exception as e:
+        current_app.logger.error(f"Error serving public newsletter image. Base: '{absolute_directory}', Filename: '{filename}'. Error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Image not found or an error occurred.'}), 404
+
+@main.route('/public_uploads/blog_content_images/<path:filename>')
+def public_blog_content_image(filename):
+    """Serves publicly accessible images for blog content uploaded via CKEditor."""
+    # Construct the correct directory path
+    # UPLOADS_FOLDER is 'uploads'. We need 'uploads/blog_content_images'
+    directory = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog_content_images')
+    absolute_directory = os.path.abspath(directory)
+    
+    current_app.logger.info(f"Attempting to serve public blog content image. Base directory: '{absolute_directory}', Filename: '{filename}'")
+    try:
+        return send_from_directory(absolute_directory, filename, as_attachment=False)
+    except Exception as e:
+        current_app.logger.error(f"Error serving public blog content image. Base: '{absolute_directory}', Filename: '{filename}'. Error: {str(e)}")
+        # Consistent error response with other image serving routes
+        return jsonify({'success': False, 'message': 'Image not found or an error occurred.'}), 404
+
+@main.route('/visa-processing', methods=['GET', 'POST'])
+def visa_processing_request():
+    form = VisaRequestForm()
+    if form.validate_on_submit():
+        try:
+            visa_request = VisaRequest(
+                full_name=form.full_name.data,
+                email=form.email.data,
+                phone=form.phone.data,
+                destination_country=form.destination_country.data,
+                visa_type=form.visa_type.data if form.visa_type.data != 'Other' else form.other_visa_type.data,
+                preferred_appointment_date=form.preferred_appointment_date.data,
+                message=form.message.data
+            )
+            db.session.add(visa_request)
+            db.session.commit()
+            flash('Your visa processing request has been submitted successfully!', 'success')
+            # TODO: Send email notification to admin and user
+            return redirect(url_for('main.visa_processing_request'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error submitting visa request: {e}")
+            flash('An error occurred while submitting your request. Please try again.', 'danger')
+    return render_template('services/visa_processing.html', form=form, title="Visa Processing Request")
+
+@main.route('/flight-booking', methods=['GET', 'POST'])
+def flight_booking_request():
+    form = FlightBookingRequestForm()
+    if form.validate_on_submit():
+        try:
+            booking_request = FlightBookingRequest(
+                full_name=form.full_name.data,
+                email=form.email.data,
+                phone=form.phone.data,
+                departure_city=form.departure_city.data,
+                arrival_city=form.arrival_city.data,
+                departure_date=form.departure_date.data,
+                return_date=form.return_date.data,
+                trip_type=form.trip_type.data,
+                adults=form.adults.data,
+                children=form.children.data,
+                infants=form.infants.data,
+                cabin_class=form.cabin_class.data,
+                flexible_dates=form.flexible_dates.data,
+                message=form.message.data
+            )
+            db.session.add(booking_request)
+            db.session.commit()
+            flash('Your flight booking request has been submitted successfully!', 'success')
+            # TODO: Send email notification to admin and user
+            return redirect(url_for('main.flight_booking_request'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error submitting flight booking request: {e}")
+            flash('An error occurred while submitting your request. Please try again.', 'danger')
+    return render_template('services/flight_booking.html', form=form, title="Flight Booking Request")
+
+@main.route('/proof-of-funds', methods=['GET', 'POST'])
+def proof_of_funds_request():
+    form = ProofOfFundsRequestForm()
+    if form.validate_on_submit():
+        try:
+            pof_request = ProofOfFundsRequest(
+                full_name=form.full_name.data,
+                email=form.email.data,
+                phone=form.phone.data,
+                service_type=form.service_type.data,
+                purpose=form.purpose.data,
+                destination_country=form.destination_country.data,
+                amount_required=form.amount_required.data,
+                timeline=form.timeline.data,
+                message=form.message.data
+            )
+            db.session.add(pof_request)
+            db.session.commit()
+            flash('Your Proof of Funds request has been submitted successfully!', 'success')
+            # TODO: Send email notification
+            return redirect(url_for('main.proof_of_funds_request'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error submitting Proof of Funds request: {e}")
+            flash('An error occurred while submitting your request. Please try again.', 'danger')
+    return render_template('services/proof_of_funds.html', form=form, title="Proof of Funds Request")
+
+@main.route('/holiday-package', methods=['GET', 'POST'])
+def holiday_package_request():
+    form = HolidayPackageRequestForm()
+    if form.validate_on_submit():
+        try:
+            package_req = HolidayPackageRequest(
+                full_name=form.full_name.data,
+                email=form.email.data,
+                phone=form.phone.data,
+                destination=form.destination.data,
+                travel_dates_flexible=form.travel_dates_flexible.data,
+                preferred_start_date=form.preferred_start_date.data,
+                preferred_end_date=form.preferred_end_date.data,
+                duration_days=form.duration_days.data, # Model expects Integer, form gives String. Needs conversion.
+                num_adults=form.num_adults.data,
+                num_children=form.num_children.data,
+                package_type=form.package_type.data,
+                interests=form.interests.data,
+                budget_preference=form.budget_preference.data,
+                message=form.message.data
+            )
+            # Convert duration_days to integer if provided
+            if package_req.duration_days:
+                try:
+                    # Attempt to extract first number if string like "7 days"
+                    import re
+                    match = re.search(r'\d+', str(package_req.duration_days))
+                    if match:
+                        package_req.duration_days = int(match.group(0))
+                    else:
+                        package_req.duration_days = None # Or handle error
+                except ValueError:
+                    package_req.duration_days = None # Or handle error / flash message
+            else:
+                package_req.duration_days = None
+
+            db.session.add(package_req)
+            db.session.commit()
+            flash('Your Holiday Package request has been submitted successfully!', 'success')
+            # TODO: Send email notification
+            return redirect(url_for('main.holiday_package_request'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error submitting Holiday Package request: {e}")
+            flash('An error occurred while submitting your request. Please try again.', 'danger')
+    return render_template('services/holiday_package.html', form=form, title="Holiday Package Request")
+
+@main.route('/hotel-accommodation', methods=['GET', 'POST'])
+def hotel_accommodation_request():
+    form = HotelAccommodationRequestForm()
+    if form.validate_on_submit():
+        if form.check_out_date.data <= form.check_in_date.data:
+            flash('Check-out date must be after check-in date.', 'danger')
+        else:
+            try:
+                hotel_req = HotelAccommodationRequest(
+                    full_name=form.full_name.data,
+                    email=form.email.data,
+                    phone=form.phone.data,
+                    destination_city_hotel=form.destination_city_hotel.data,
+                    check_in_date=form.check_in_date.data,
+                    check_out_date=form.check_out_date.data,
+                    num_adults=form.num_adults.data,
+                    num_children=form.num_children.data,
+                    num_rooms=form.num_rooms.data,
+                    hotel_preferences=form.hotel_preferences.data,
+                    room_type_preference=form.room_type_preference.data,
+                    budget_per_night=form.budget_per_night.data,
+                    special_requests=form.special_requests.data
+                )
+                db.session.add(hotel_req)
+                db.session.commit()
+                flash('Your Hotel/Accommodation request has been submitted successfully!', 'success')
+                # TODO: Send email notification
+                return redirect(url_for('main.hotel_accommodation_request'))
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Error submitting Hotel Accommodation request: {e}")
+                flash('An error occurred while submitting your request. Please try again.', 'danger')
+    return render_template('services/hotel_accommodation.html', form=form, title="Hotel & Accommodation Request")
+
+# Placeholder for other service routes to be added later...

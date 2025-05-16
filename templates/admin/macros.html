@@ -1,0 +1,66 @@
+{% macro render_pagination(pagination, endpoint) %}
+    {# Existing query parameters (like filters, sort order) should be preserved. #}
+    {% set query_args = request.args.to_dict() %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{% if pagination.has_prev %}{{ url_for(endpoint, page=pagination.prev_num, **query_args) }}{% else %}#__{% endif %}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if pagination.page == page_num %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for(endpoint, page=page_num, **query_args) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{% if pagination.has_next %}{{ url_for(endpoint, page=pagination.next_num, **query_args) }}{% else %}#__{% endif %}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+{% endmacro %}
+
+{% macro render_flash_messages(messages) %}
+    {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_form_field(field, sr_only_label=False, class='') %}
+  <div class="form-group mb-3">
+    {% if not sr_only_label %}
+      {{ field.label(class="form-label") }}
+    {% endif %}
+    {# Add the is-invalid class if there are errors #}
+    {% set effective_class = 'form-control ' + class %}
+    {% if field.errors %}
+        {% set effective_class = effective_class + ' is-invalid' %}
+    {% endif %}
+    {{ field(class=effective_class) }}
+    {% if field.errors %}
+      <div class="invalid-feedback">
+        {% for error in field.errors %}
+          {{ error }}
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if field.description %}
+        <small class="form-text text-muted">{{ field.description }}</small>
+    {% endif %}
+  </div>
+{% endmacro %} 

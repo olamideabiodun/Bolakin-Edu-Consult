@@ -415,21 +415,30 @@
         </div>
         
         <div class="team-grid">
+            {% if admin_user %}
             <div class="team-member" data-aos="fade-up" data-aos-delay="100">
                 <div class="member-image">
-                    <img src="{{ url_for('static', filename='images/team/team1.jpg') }}" alt="Team Member" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                    {% if admin_user.profile_image_file %}
+                        <img src="{{ url_for('main.uploaded_file', subpath=admin_user.profile_image_file) }}" alt="{{ admin_user.username }}" onerror="this.src='{{ url_for('static', filename='images/default_avatar.png') }}';">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Default Avatar">
+                    {% endif %}
                 </div>
                 <div class="member-details">
-                    <h3 class="member-name">Adeboye Olamide</h3>
+                    <h3 class="member-name">{{ admin_user.username }}</h3>
                     <p class="member-position">Founder & CEO</p>
-                    <p class="member-bio">With over 15 years of experience in international education, Adeboye leads our team with passion and vision.</p>
+                    <p class="member-bio">Educational consultant with extensive knowledge in international programs. Passionate about helping students achieve their academic dreams.</p>
                     <div class="member-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fas fa-envelope"></i></a>
+                        {% if admin_user.linkedin_url %}<a href="{{ admin_user.linkedin_url }}" target="_blank"><i class="fab fa-linkedin-in"></i></a>{% endif %}
+                        {% if admin_user.twitter_url %}<a href="{{ admin_user.twitter_url }}" target="_blank"><i class="fab fa-twitter"></i></a>{% endif %}
+                        {% if admin_user.instagram_url %}<a href="{{ admin_user.instagram_url }}" target="_blank"><i class="fab fa-instagram"></i></a>{% endif %}
+                        {% if admin_user.facebook_url %}<a href="{{ admin_user.facebook_url }}" target="_blank"><i class="fab fa-facebook-f"></i></a>{% endif %}
+                        {# Add a generic envelope if no other socials, or always show it #}
+                        {# <a href="mailto:{{ admin_user.email }}"><i class="fas fa-envelope"></i></a> #}
                     </div>
                 </div>
             </div>
+            {% endif %}
             
             <div class="team-member" data-aos="fade-up" data-aos-delay="200">
                 <div class="member-image">

@@ -2,461 +2,370 @@
 
 {% block extra_css %}
 <style>
-    /* Blog Page Styles */
-    .blog-hero {
-        background-color: #000;
+    /* Reset and Base Styles */
+    body {
+        font-family: 'Arial', sans-serif; /* Matching common sans-serif font */
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .container {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 700;
+        color: #333; /* Default heading color */
+    }
+
+    a {
+        color: #FF9933; /* Bolakin Orange */
+        text-decoration: none;
+    }
+    a:hover {
+        color: #FF8C00; /* Darker Orange */
+        text-decoration: underline;
+    }
+
+    .btn-join {
+        display: inline-block;
+        padding: 12px 30px;
+        background-color: #FF9933;
+        color: white !important; /* Ensure text is white */
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 5px;
+        text-decoration: none !important; /* Remove underline */
+        transition: background-color 0.3s ease, transform 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-join:hover {
+        background-color: #FF8C00;
+        transform: translateY(-3px);
+        color: white !important; /* Ensure text is white on hover */
+    }
+
+    /* Blog Hero Section - Styles from https://bolakineduconsult.ng/Blog/ */
+    .blog-hero-main {
+        background-color: #1a1a1a; /* Dark background */
+        color: white;
+        padding: 100px 0;
+        text-align: center;
         position: relative;
-        height: 400px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         overflow: hidden;
     }
-    
-    .blog-hero::before {
+
+    .blog-hero-main::before {
         content: '';
+        background-image: url("{{ url_for('static', filename='images/image.png') }}");
+        background-size: cover;
+        background-position: center;
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.7);
+        opacity: 0.1; /* Adjust for subtlety */
+        z-index: 0;
+    }
+
+    .blog-hero-main .container {
+        position: relative;
         z-index: 1;
     }
-    
-    .blog-hero-content {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-        color: white;
-        padding: 20px;
-        max-width: 800px;
-    }
-    
-    .blog-hero-content h1 {
+
+    .blog-hero-main h1 {
         font-size: 48px;
-        color: #FF9933;
+        color: #FF9933; /* Orange accent */
         margin-bottom: 20px;
         font-weight: 700;
     }
-    
-    .blog-hero-content p {
-        font-size: 18px;
-        color: rgba(255,255,255,0.9);
-        line-height: 1.6;
+
+    .blog-hero-main p.subtitle {
+        font-size: 20px;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 40px;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
     }
     
-    .blog-hero-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0.6;
+    .friendly-community-section {
+        background-color: rgba(0,0,0,0.3); /* Slightly darker transparent box */
+        padding: 30px;
+        border-radius: 10px;
+        max-width: 800px;
+        margin: 30px auto;
     }
-    
-    /* Blog Section Layout */
-    .blog-section {
-        padding: 80px 0;
-        background-color: #f9f9f9;
-    }
-    
-    .blog-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 30px;
-    }
-    
-    .blog-main {
-        flex: 2;
-        min-width: 300px;
-    }
-    
-    .blog-sidebar {
-        flex: 1;
-        min-width: 250px;
-    }
-    
-    /* Blog Post Card */
-    .blog-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 30px;
-    }
-    
-    .blog-card {
-        background-color: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .blog-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    }
-    
-    .blog-card-image {
-        height: 200px;
-        overflow: hidden;
-    }
-    
-    .blog-card-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-    
-    .blog-card:hover .blog-card-image img {
-        transform: scale(1.1);
-    }
-    
-    .blog-card-content {
-        padding: 25px;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .blog-card-meta {
-        display: flex;
-        align-items: center;
+
+    .friendly-community-section h2 {
+        font-size: 28px;
+        color: white;
         margin-bottom: 15px;
+    }
+
+    .friendly-community-section p {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 25px;
+    }
+    
+    .scroll-down {
+        margin-top: 40px;
         font-size: 14px;
-        color: #666;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    .scroll-down a {
+        color: rgba(255, 255, 255, 0.7) !important;
+        text-decoration: none;
+    }
+    .scroll-down a:hover {
+        color: #FF9933 !important;
+    }
+    .scroll-down i {
+        display: block;
+        margin: 5px auto;
+        font-size: 24px;
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+
+    /* Discover Destination Section */
+    .discover-destination {
+        padding: 80px 0;
+        background-color: #f0f0f0; /* Light grey background */
+        text-align: center;
+    }
+
+    .discover-destination h2 {
+        font-size: 36px;
+        margin-bottom: 20px;
+    }
+
+    .discover-destination p {
+        font-size: 18px;
+        color: #555;
+        margin-bottom: 30px;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
     }
     
-    .blog-card-meta .date {
+    .discover-destination .btn-join {
+        margin: 0 10px;
+    }
+    
+    .discover-navigation { /* For "Previous Next" text, if used as visual cue */
+        margin-top: 30px;
+        color: #777;
+        font-size: 16px;
+        /* This will be replaced by slider controls */
+    }
+    /* .discover-navigation span {
+        margin: 0 15px;
+    } */
+
+    /* Image Slider Styles */
+    .image-slider-container {
+        background-color: #f0f0f0; /* Match Discover Destination section background */
+        padding-bottom: 80px; /* Space after slider */
+        text-align:center;
+    }
+    .image-slider {
+        max-width: 900px; /* Adjust as needed */
+        margin: 0 auto;
+        overflow: hidden;
+        position: relative;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        background-color: #e0e0e0; /* Background for the slider area */
+        border: 1px solid #FF9933; /* Orange border */
+    }
+
+    .slider-track {
         display: flex;
-        align-items: center;
-        margin-right: 20px;
+        transition: transform 0.5s ease-in-out;
     }
-    
-    .blog-card-meta .category {
+
+    .slide {
+        min-width: 100%;
+        box-sizing: border-box;
+        display: flex; /* For centering image if needed */
+        align-items: center; /* For centering image if needed */
+        justify-content: center; /* For centering image if needed */
+        height: 600px; /* Adjusted height for better aspect ratio with contain */
+        background-color: #f8f8f8; /* Fallback background for slides */
+    }
+
+    .slide img {
+        width: 100%;
+        height: 100%; /* Make image take full height of slide */
+        object-fit: contain; /* Fit image within bounds, preserving aspect ratio */
+        display: block;
+        border-radius: 8px; /* Optional: if images themselves should have rounded corners */
+    }
+
+    /* Slider Navigation Buttons */
+    .slider-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
         display: flex;
-        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px; /* Adjust padding as needed */
+        z-index: 10; /* Ensure buttons are above images */
+    }
+
+    .slider-nav button {
+        background: transparent; /* No background */
+        border: none; /* No border */
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 2.5rem; /* Larger chevron */
+        cursor: pointer;
+        padding: 10px;
+        line-height: 1;
+        transition: color 0.3s ease;
+    }
+
+    .slider-nav button:hover,
+    .slider-nav button:focus {
+        color: #fff; /* White color on hover/focus */
+        outline: none; /* Remove default focus outline */
+    }
+
+    .slider-nav .prev-slide { 
+        /* Specific adjustments if needed, e.g., margin-left: -10px; to bring closer if padding makes it too far */
+    }
+    .slider-nav .next-slide { 
+        /* Specific adjustments if needed, e.g., margin-right: -10px; */
+    }
+
+    .slider-dots {
+        position: absolute;
+        bottom: 25px; /* Adjusted vertical position */
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        z-index: 10; /* Ensure dots are above images */
+    }
+
+    .slider-dots .dot {
+        width: 15px; /* Increased dot size */
+        height: 15px; /* Increased dot size */
+        border-radius: 50%;
+        background-color: transparent; /* Inactive dot transparent */
+        border: 2px solid #AAAAAA; /* Grey outline for inactive dots */
+        margin: 0 7px; /* Adjusted dot spacing */
+        cursor: pointer;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .slider-dots .dot.active {
+        background-color: #FF9933; /* Active dot filled with orange */
+        border-color: #FF9933; /* Active dot border orange */
+    }
+
+
+    /* Blog Listing Section */
+    .blog-listing-section {
+        padding: 80px 0;
+        background-color: #ffffff; /* White background for post listings */
+    }
+
+    .blog-article-item {
+        background-color: #fff;
+        margin-bottom: 60px; /* Space between articles */
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .blog-article-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+    }
+
+
+    .blog-article-item h2.article-title {
+        font-size: 32px;
+        margin-bottom: 15px;
+    }
+    .blog-article-item h2.article-title a {
+        color: #333;
+        text-decoration: none;
+    }
+    .blog-article-item h2.article-title a:hover {
+        color: #FF9933;
     }
     
-    .blog-card-meta i {
+    .article-meta {
+        font-size: 14px;
+        color: #777;
+        margin-bottom: 20px;
+    }
+    .article-meta span {
+        margin-right: 15px;
+    }
+    .article-meta i {
         margin-right: 5px;
         color: #FF9933;
     }
-    
-    .blog-card-title {
-        font-size: 22px;
-        color: #333;
-        margin-bottom: 15px;
-        font-weight: 600;
-        line-height: 1.4;
-    }
-    
-    .blog-card-title a {
-        color: #333;
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-    
-    .blog-card-title a:hover {
-        color: #FF9933;
-    }
-    
-    .blog-card-excerpt {
+
+    .article-excerpt {
+        font-size: 16px;
+        line-height: 1.7;
         color: #555;
-        font-size: 16px;
-        line-height: 1.6;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
-    
-    .blog-card-link {
-        margin-top: auto;
-        display: inline-block;
-        padding: 10px 20px;
-        background-color: #FF9933;
-        color: white;
-        text-decoration: none;
-        border-radius: 30px;
-        font-size: 14px;
+    /* Styling for potential subsections within excerpt if post.content is used and contains HTML */
+    .article-excerpt h3, .article-excerpt h4 {
+      font-size: 20px;
+      color: #444;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    .article-excerpt ul {
+      list-style: disc;
+      padding-left: 20px;
+      margin-bottom: 15px;
+    }
+     .article-excerpt strong { color: #FF9933; }
+
+
+    .continue-reading {
         font-weight: 600;
-        transition: all 0.3s ease;
-        align-self: flex-start;
-    }
-    
-    .blog-card-link:hover {
-        background-color: #FF8C00;
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);
-    }
-    
-    /* Sidebar Widgets */
-    .widget {
-        background-color: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    }
-    
-    .widget-title {
         color: #FF9933;
-        font-size: 20px;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid rgba(255, 153, 51, 0.1);
-        position: relative;
-    }
-    
-    .widget-title::after {
-        content: '';
-        position: absolute;
-        width: 50px;
-        height: 2px;
-        background-color: #FF9933;
-        bottom: -2px;
-        left: 0;
-    }
-    
-    /* Categories Widget */
-    .widget-categories ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .widget-categories li {
-        border-bottom: 1px solid #eee;
-        padding: 10px 0;
-    }
-    
-    .widget-categories li:last-child {
-        border-bottom: none;
-    }
-    
-    .widget-categories a {
-        color: #333;
         text-decoration: none;
-        transition: color 0.3s ease;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        font-style: italic; /* Italic as per example */
     }
-    
-    .widget-categories a:hover {
-        color: #FF9933;
+    .continue-reading:hover {
+        color: #FF8C00;
+        text-decoration: underline;
     }
-    
-    .widget-categories .count {
-        background-color: rgba(255, 153, 51, 0.1);
-        color: #FF9933;
-        font-size: 12px;
-        padding: 3px 8px;
-        border-radius: 30px;
-    }
-    
-    /* Recent Posts Widget */
-    .recent-post {
-        display: flex;
-        margin-bottom: 20px;
-    }
-    
-    .recent-post:last-child {
-        margin-bottom: 0;
-    }
-    
-    .recent-post-image {
-        width: 80px;
-        height: 80px;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-right: 15px;
-        flex-shrink: 0;
-    }
-    
-    .recent-post-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .recent-post-content {
-        flex-grow: 1;
-    }
-    
-    .recent-post-title {
-        font-size: 16px;
-        margin-bottom: 5px;
-        line-height: 1.4;
-    }
-    
-    .recent-post-title a {
-        color: #333;
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-    
-    .recent-post-title a:hover {
-        color: #FF9933;
-    }
-    
-    .recent-post-date {
-        font-size: 12px;
-        color: #666;
-    }
-    
-    /* Search Widget */
-    .blog-search-form {
-        display: flex;
-    }
-    
-    .blog-search-input {
-        flex-grow: 1;
-        padding: 10px 15px;
-        border: 1px solid #ddd;
-        border-right: none;
-        border-radius: 30px 0 0 30px;
-        font-size: 14px;
-    }
-    
-    .blog-search-input:focus {
-        outline: none;
-        border-color: #FF9933;
-    }
-    
-    .blog-search-btn {
-        background-color: #FF9933;
-        color: white;
-        border: none;
-        padding: 0 20px;
-        border-radius: 0 30px 30px 0;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    
-    .blog-search-btn:hover {
-        background-color: #FF8C00;
-    }
-    
-    /* Tags Widget */
-    .widget-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    
-    .tag {
-        display: inline-block;
-        padding: 5px 15px;
-        background-color: rgba(255, 153, 51, 0.1);
-        color: #FF9933;
-        border-radius: 30px;
-        font-size: 12px;
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-    
-    .tag:hover {
-        background-color: #FF9933;
-        color: white;
-        transform: translateY(-3px);
-    }
-    
-    /* Pagination */
-    .blog-pagination {
-        margin-top: 50px;
-        display: flex;
-        justify-content: center;
-    }
-    
-    .pagination {
-        display: flex;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .pagination li {
-        margin: 0 5px;
-    }
-    
-    .pagination a, .pagination span {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: white;
-        color: #333;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .pagination a:hover {
-        background-color: #FF9933;
-        color: white;
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);
-    }
-    
-    .pagination .active span {
-        background-color: #FF9933;
-        color: white;
-    }
-    
-    .pagination .disabled span {
-        color: #ccc;
-        cursor: not-allowed;
-    }
-    
-    /* Category Badge */
-    .category-badge {
-        display: inline-block;
-        padding: 5px 15px;
-        background-color: rgba(255, 153, 51, 0.1);
-        color: #FF9933;
-        border-radius: 30px;
-        font-size: 12px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        margin-right: 10px;
-        margin-bottom: 10px;
-    }
-    
-    .category-badge:hover {
-        background-color: #FF9933;
-        color: white;
-    }
-    
-    /* Category Filter */
-    .category-filter {
-        margin-bottom: 30px;
-    }
-    
-    .filter-title {
-        font-size: 18px;
-        color: #333;
-        margin-bottom: 15px;
-    }
-    
-    .filter-badges {
-        display: flex;
-        flex-wrap: wrap;
-    }
-    
+
     /* Empty state */
     .empty-state {
         text-align: center;
         padding: 50px 20px;
-        background-color: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     }
     
     .empty-state-icon {
@@ -475,269 +384,423 @@
         color: #666;
         margin-bottom: 30px;
     }
+
+    /* Pagination */
+    .blog-pagination {
+        margin-top: 50px;
+        display: flex;
+        justify-content: center;
+        padding-bottom: 30px;
+    }
     
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .pagination li {
+        margin: 0 5px;
+    }
+    
+    .pagination a, .pagination span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        border-radius: 8px; /* Slightly less rounded */
+        background-color: #f0f0f0; /* Light grey */
+        color: #555;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+    
+    .pagination a:hover {
+        background-color: #FF9933;
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .pagination .active span {
+        background-color: #FF9933;
+        color: white;
+    }
+    
+    .pagination .disabled span {
+        background-color: #e9ecef;
+        color: #adb5bd;
+        cursor: not-allowed;
+    }
+
+    /* Footer specific styles if needed, assuming base.html has a footer */
+    /* .site-footer { text-align: center; padding: 20px 0; background-color: #1a1a1a; color: white; } */
+    /* .site-footer p { margin: 0; font-size: 14px; } */
+
     /* Mobile responsiveness */
     @media (max-width: 768px) {
-        .blog-hero {
-            height: 350px;
+        .blog-hero-main {
+            padding: 60px 0;
         }
-        
-        .blog-hero-content h1 {
+        .blog-hero-main h1 {
             font-size: 36px;
         }
-        
-        .blog-container {
-            flex-direction: column;
+        .blog-hero-main p.subtitle {
+            font-size: 18px;
         }
-        
-        .blog-grid {
-            grid-template-columns: 1fr;
+        .friendly-community-section h2 {
+            font-size: 24px;
+        }
+
+        .discover-destination {
+            padding: 60px 0 40px; /* Adjusted padding for slider */
+        }
+        .discover-destination h2 {
+            font-size: 28px;
+        }
+        .discover-destination p {
+            font-size: 16px;
+        }
+        .discover-destination .btn-join {
+            padding: 10px 20px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        /* .discover-destination .btn-join:last-child {
+            margin-bottom: 0;
+        } */
+
+        .image-slider {
+            max-width: 95%;
+        }
+        .slide img {
+            height: 300px; /* Adjust for mobile */
+        }
+
+        .blog-listing-section {
+            padding: 40px 0;
+        }
+        .blog-article-item {
+            padding: 20px;
+            margin-bottom: 40px;
+        }
+        .blog-article-item h2.article-title {
+            font-size: 24px;
+        }
+        .article-excerpt {
+            font-size: 15px;
+        }
+        .pagination a, .pagination span {
+            width: 38px;
+            height: 38px;
+            font-size: 14px;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Blog Hero Section -->
-<section class="blog-hero">
-    <img src="{{ url_for('static', filename='images/blog/hero-bg.jpg') }}" alt="Blog" class="blog-hero-bg" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
-    <div class="blog-hero-content">
-        <h1 data-aos="fade-up">
-            {% if current_category %}
-            {{ current_category.name }}
-            {% else %}
-            Our Blog
-            {% endif %}
-        </h1>
-        <p data-aos="fade-up" data-aos-delay="200">
-            {% if current_category %}
-            {{ current_category.description or 'Explore our articles and insights about ' + current_category.name }}
-            {% else %}
-            Stay informed with the latest educational news, study abroad tips, and student success stories.
-            {% endif %}
-        </p>
-    </div>
-</section>
-
-<!-- Blog Content Section -->
-<section class="blog-section">
+<!-- New Blog Hero Section -->
+<section class="blog-hero-main" data-aos="fade-in">
     <div class="container">
-        <div class="blog-container">
-            <!-- Main Content -->
-            <div class="blog-main">
-                {% if current_category %}
-                <div class="category-filter">
-                    <div class="filter-badges">
-                        <a href="{{ url_for('main.blog') }}" class="category-badge">
-                            <i class="fas fa-times"></i> Clear Filter
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if posts %}
-                <div class="blog-grid">
-                    {% for post in posts %}
-                    <div class="blog-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
-                        <div class="blog-card-image">
-                            {% if post.featured_image %}
-                            <img src="{{ url_for('static', filename=post.featured_image) }}" alt="{{ post.title }}">
-                            {% else %}
-                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ post.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
-                            {% endif %}
-                        </div>
-                        <div class="blog-card-content">
-                            <div class="blog-card-meta">
-                                <div class="date">
-                                    <i class="far fa-calendar-alt"></i>
-                                    {{ post.formatted_date }}
-                                </div>
-                                {% if post.categories %}
-                                <div class="category">
-                                    <i class="far fa-folder-open"></i>
-                                    {{ post.categories[0].name }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <h2 class="blog-card-title">
-                                <a href="{{ url_for('main.blog_post', slug=post.slug) }}">{{ post.title }}</a>
-                            </h2>
-                            <div class="blog-card-excerpt">
-                                {% if post.excerpt %}
-                                {{ post.excerpt }}
-                                {% else %}
-                                {{ post.content|striptags|truncate(150) }}
-                                {% endif %}
-                            </div>
-                            <a href="{{ url_for('main.blog_post', slug=post.slug) }}" class="blog-card-link">
-                                Read More <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Pagination -->
-                {% if pagination.pages > 1 %}
-                <div class="blog-pagination">
-                    <ul class="pagination">
-                        {% if pagination.has_prev %}
-                        <li>
-                            <a href="{{ url_for('main.blog', page=pagination.prev_num, category=current_category.slug if current_category else None) }}">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="disabled">
-                            <span><i class="fas fa-chevron-left"></i></span>
-                        </li>
-                        {% endif %}
-                        
-                        {% for page in pagination.iter_pages() %}
-                            {% if page %}
-                                {% if page == pagination.page %}
-                                <li class="active">
-                                    <span>{{ page }}</span>
-                                </li>
-                                {% else %}
-                                <li>
-                                    <a href="{{ url_for('main.blog', page=page, category=current_category.slug if current_category else None) }}">{{ page }}</a>
-                                </li>
-                                {% endif %}
-                            {% else %}
-                                <li class="disabled">
-                                    <span>...</span>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if pagination.has_next %}
-                        <li>
-                            <a href="{{ url_for('main.blog', page=pagination.next_num, category=current_category.slug if current_category else None) }}">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="disabled">
-                            <span><i class="fas fa-chevron-right"></i></span>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </div>
-                {% endif %}
-                
-                {% else %}
-                <!-- Empty State -->
-                <div class="empty-state" data-aos="fade-up">
-                    <div class="empty-state-icon">
-                        <i class="far fa-newspaper"></i>
-                    </div>
-                    <h2 class="empty-state-title">No Posts Found</h2>
-                    <p class="empty-state-text">
-                        {% if current_category %}
-                        There are no posts in this category yet. Check back soon or explore other categories.
-                        {% else %}
-                        We haven't published any blog posts yet. Check back soon for updates!
-                        {% endif %}
-                    </p>
-                    {% if current_category %}
-                    <a href="{{ url_for('main.blog') }}" class="blog-card-link">
-                        View All Posts <i class="fas fa-arrow-right"></i>
-                    </a>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-            
-            <!-- Sidebar -->
-            <div class="blog-sidebar">
-                <!-- Search Widget -->
-                <div class="widget widget-search">
-                    <h3 class="widget-title">Search</h3>
-                    <form action="{{ url_for('main.blog') }}" method="GET" class="blog-search-form">
-                        <input type="text" name="search" placeholder="Search posts..." class="blog-search-input">
-                        <button type="submit" class="blog-search-btn">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- Categories Widget -->
-                <div class="widget widget-categories">
-                    <h3 class="widget-title">Categories</h3>
-                    <ul>
-                        {% for category in categories %}
-                        <li>
-                            <a href="{{ url_for('main.blog', category=category.slug) }}">
-                                {{ category.name }}
-                                <span class="count">{{ category.posts|length }}</span>
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                
-                <!-- Recent Posts Widget -->
-                <div class="widget widget-recent-posts">
-                    <h3 class="widget-title">Recent Posts</h3>
-                    {% for post in recent_posts %}
-                    <div class="recent-post">
-                        <div class="recent-post-image">
-                            {% if post.featured_image %}
-                            <img src="{{ url_for('static', filename=post.featured_image) }}" alt="{{ post.title }}">
-                            {% else %}
-                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ post.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
-                            {% endif %}
-                        </div>
-                        <div class="recent-post-content">
-                            <h4 class="recent-post-title">
-                                <a href="{{ url_for('main.blog_post', slug=post.slug) }}">{{ post.title }}</a>
-                            </h4>
-                            <div class="recent-post-date">
-                                <i class="far fa-calendar-alt"></i> {{ post.formatted_date }}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Popular Posts Widget -->
-                <div class="widget widget-recent-posts">
-                    <h3 class="widget-title">Popular Posts</h3>
-                    {% for post in popular_posts %}
-                    <div class="recent-post">
-                        <div class="recent-post-image">
-                            {% if post.featured_image %}
-                            <img src="{{ url_for('static', filename=post.featured_image) }}" alt="{{ post.title }}">
-                            {% else %}
-                            <img src="{{ url_for('static', filename='images/blog/placeholder.jpg') }}" alt="{{ post.title }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
-                            {% endif %}
-                        </div>
-                        <div class="recent-post-content">
-                            <h4 class="recent-post-title">
-                                <a href="{{ url_for('main.blog_post', slug=post.slug) }}">{{ post.title }}</a>
-                            </h4>
-                            <div class="recent-post-date">
-                                <i class="far fa-eye"></i> {{ post.views_count }} views
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Tags Widget -->
-                <div class="widget">
-                    <h3 class="widget-title">Tags</h3>
-                    <div class="widget-tags">
-                        {% for category in categories %}
-                        <a href="{{ url_for('main.blog', category=category.slug) }}" class="tag">{{ category.name }}</a>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+        <h1>Welcome to our travel blog</h1>
+        <p class="subtitle">Educational Opportunities and Travel Updates</p>
+
+        <div class="friendly-community-section" data-aos="fade-up" data-aos-delay="200">
+            <h2>Join the world's most friendliest travel community</h2>
+            <p>We provide a diverse range of programs, news and information from various countries to enhance the educational experience for our clients.</p>
+            <a href="https://chat.whatsapp.com/BrKUZwbpBheKi53DeasOYT" class="btn-join">Join now!</a>
+        </div>
+        
+        <div class="scroll-down" data-aos="fade-up" data-aos-delay="400">
+            <a href="#discover-section">
+                Scroll down
+                <i class="fas fa-chevron-down"></i>
+            </a>
         </div>
     </div>
 </section>
 
-{% include 'components/newsletter.html' %}
+<!-- Discover New Destination Section -->
+<section class="discover-destination" id="discover-section" data-aos="fade-up" data-aos-duration="1500">
+    <div class="container">
+        <h2>Discover your new destination!</h2>
+        <p>Join Our community to get latest travel updates and educational insights!</p>
+        {# <a href="https://chat.whatsapp.com/BrKUZwbpBheKi53DeasOYT" class="btn-join">Join Now!</a> #} {# Removed this button #}
+        {# Removed the "Previous | Next" text as slider controls will serve this purpose #}
+    </div>
+</section>
+
+<!-- Image Slider Section -->
+<section class="image-slider-container" data-aos="fade-up">
+    <div class="image-slider">
+        <div class="slider-track">
+            <div class="slide">
+                <img src="{{ url_for('static', filename='images/bol1.png') }}" alt="Slider Image 1">
+            </div>
+            <div class="slide">
+                <img src="{{ url_for('static', filename='images/bol2.png') }}" alt="Slider Image 2">
+            </div>
+            <div class="slide">
+                <img src="{{ url_for('static', filename='images/bol3.png') }}" alt="Slider Image 3">
+            </div>
+            <div class="slide">
+                <img src="{{ url_for('static', filename='images/bol4.png') }}" alt="Slider Image 4">
+            </div>
+            <div class="slide">
+                <img src="{{ url_for('static', filename='images/bol5.png') }}" alt="Slider Image 5">
+            </div>
+        </div>
+        <div class="slider-nav">
+            <button class="prev-slide"><i class="fas fa-chevron-left"></i></button>
+            <button class="next-slide"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="slider-dots">
+            <!-- Dots will be generated by JavaScript -->
+        </div>
+    </div>
+</section>
+
+
+<!-- Blog Listing Section -->
+<section class="blog-listing-section">
+    <div class="container">
+        {% if posts %}
+            {% for post in posts %}
+            <article class="blog-article-item" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                <h2 class="article-title"><a href="{{ url_for('main.blog_post', slug=post.slug) }}">{{ post.title }}</a></h2>
+                <div class="article-meta">
+                    <span><i class="far fa-calendar-alt"></i> {{ post.formatted_date }}</span>
+                    <span><i class="far fa-user"></i> {{ post.author.username }}</span>
+                    {% if post.categories %}
+                    <span><i class="far fa-folder-open"></i>
+                        {% for cat in post.categories %}
+                            <a href="{{ url_for('main.blog', category=cat.slug) }}">{{ cat.name }}</a>{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </span>
+                    {% endif %}
+                    <span><i class="far fa-eye"></i> {{ post.views_count }} views</span>
+                </div>
+                <div class="article-excerpt">
+                    {% if post.excerpt %}
+                        {{ post.excerpt|safe }}
+                    {% else %}
+                        {{ post.content|striptags|truncate(450, True, '...')|safe }}
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('main.blog_post', slug=post.slug) }}" class="continue-reading"><strong><em>Continue reading...</em></strong></a>
+            </article>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if pagination and pagination.pages > 1 %}
+            <div class="blog-pagination">
+                <ul class="pagination">
+                    {% if pagination.has_prev %}
+                    <li>
+                        <a href="{{ url_for('main.blog', page=pagination.prev_num, category=current_category.slug if current_category else None) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="disabled">
+                        <span><i class="fas fa-chevron-left"></i></span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num == pagination.page %}
+                            <li class="active">
+                                <span>{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a href="{{ url_for('main.blog', page=page_num, category=current_category.slug if current_category else None) }}">{{ page_num }}</a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="disabled">
+                                <span>...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                    <li>
+                        <a href="{{ url_for('main.blog', page=pagination.next_num, category=current_category.slug if current_category else None) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="disabled">
+                        <span><i class="fas fa-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state" data-aos="fade-up">
+                <div class="empty-state-icon">
+                    <i class="far fa-newspaper"></i>
+                </div>
+                <h2 class="empty-state-title">No Posts Found</h2>
+                <p class="empty-state-text">
+                    {% if current_category %}
+                    There are no posts in this category yet. Check back soon or explore other categories.
+                    {% else %}
+                    We haven't published any blog posts yet. Check back soon for updates!
+                    {% endif %}
+                </p>
+                {% if current_category %}
+                <a href="{{ url_for('main.blog') }}" class="btn-join">
+                    View All Posts
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+{# The target page has a simple footer. Assuming base.html handles the main footer structure. #}
+{# If you need to force "BOLAKINEDUCONSULT © 2022", you might add it here or ensure base.html has it. #}
+{# Example for adding it if base footer is not sufficient: #}
+{# {% block footer_bottom_content %} #}
+{# <div style="text-align: center; padding: 20px 0; background-color: #1a1a1a; color: white; font-size: 14px;"> #}
+{# <p>BOLAKINEDUCONSULT © 2022</p> #}
+{# </div> #}
+{# {% endblock %} #}
+
+
+{# The original page includes a newsletter signup component. #}
+{# Assuming 'components/newsletter.html' exists and is styled appropriately, #}
+{# or can be included if needed. The provided screenshot doesn't show it directly after posts. #}
+{# For now, I'm omitting it unless you confirm it should be here. #}
+{# {% include 'components/newsletter.html' %} #}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sliderTrack = document.querySelector('.slider-track');
+    const slides = Array.from(sliderTrack.children);
+    const nextButton = document.querySelector('.next-slide');
+    const prevButton = document.querySelector('.prev-slide');
+    const dotsContainer = document.querySelector('.slider-dots');
+
+    if (!sliderTrack || !nextButton || !prevButton || !dotsContainer || slides.length === 0) {
+        console.warn('Slider elements (track, buttons, or dots container) not found or no slides present. Slider will not be fully initialized.');
+        if (slides.length === 0 && sliderTrack) {
+            // If track exists but no slides, hide nav/dots potentially
+            if(nextButton) nextButton.style.display = 'none';
+            if(prevButton) prevButton.style.display = 'none';
+            if(dotsContainer) dotsContainer.style.display = 'none';
+        }
+        return;
+    }
+
+    let currentIndex = 0;
+    let slideWidth = slides[0].getBoundingClientRect().width; // Initialize slideWidth
+
+    // Create dots
+    slides.forEach((slide, index) => {
+        const dot = document.createElement('button');
+        dot.classList.add('dot');
+        dot.setAttribute('aria-label', `Go to slide ${index + 1}`);
+        dot.addEventListener('click', () => {
+            currentIndex = index;
+            updateSlider();
+        });
+        dotsContainer.appendChild(dot);
+    });
+
+    const dots = Array.from(dotsContainer.children);
+
+    const updateSlider = () => {
+        slideWidth = slides[0].getBoundingClientRect().width; // Recalculate on update for responsiveness
+        sliderTrack.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
+        updateDots();
+    };
+
+    const updateDots = () => {
+        dots.forEach((dot, index) => {
+            if (index === currentIndex) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        });
+    };
+
+    // Initial setup
+    updateSlider();
+
+
+    // Next slide
+    nextButton.addEventListener('click', e => {
+        currentIndex++;
+        if (currentIndex >= slides.length) {
+            currentIndex = 0; // Loop to first slide
+        }
+        updateSlider();
+    });
+
+    // Previous slide
+    prevButton.addEventListener('click', e => {
+        currentIndex--;
+        if (currentIndex < 0) {
+            currentIndex = slides.length - 1; // Loop to last slide
+        }
+        updateSlider();
+    });
+    
+    // Optional: Auto-slide (uncomment to enable)
+    // let autoSlideInterval = setInterval(() => {
+    //     nextButton.click();
+    // }, 5000); // Change slide every 5 seconds
+
+    // // Pause auto-slide on hover (optional)
+    // const slider = document.querySelector('.image-slider');
+    // if (slider) {
+    //     slider.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+    //     slider.addEventListener('mouseleave', () => {
+    //         autoSlideInterval = setInterval(() => {
+    //             nextButton.click();
+    //         }, 5000);
+    //     });
+    // }
+
+
+    // Recalculate slide width on resize (important for responsiveness)
+    window.addEventListener('resize', () => {
+        // Debounce or throttle this for performance if you notice issues
+        updateSlider(); 
+    });
+
+    // Initialize first dot as active
+    if (dots.length > 0) {
+        dots[0].classList.add('active');
+    }
+
+    // Smooth scroll for internal links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

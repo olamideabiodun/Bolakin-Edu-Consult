@@ -1,0 +1,108 @@
+{% extends "admin/base.html" %}
+{% from "_form_macros.html" import render_field %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Hotel/Accommodation Request Information</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Request ID:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.id }}</dd>
+
+                    <dt class="col-sm-4">Full Name:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.full_name }}</dd>
+
+                    <dt class="col-sm-4">Email Address:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.email }}</dd>
+
+                    <dt class="col-sm-4">Phone Number:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.phone }}</dd>
+
+                    <dt class="col-sm-4">Destination/Hotel:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.destination_city_hotel }}</dd>
+
+                    <dt class="col-sm-4">Check-in Date:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.check_in_date.strftime('%Y-%m-%d') if hotel_req.check_in_date else 'N/A' }}</dd>
+
+                    <dt class="col-sm-4">Check-out Date:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.check_out_date.strftime('%Y-%m-%d') if hotel_req.check_out_date else 'N/A' }}</dd>
+
+                    <dt class="col-sm-4">Guests:</dt>
+                    <dd class="col-sm-8">Adults: {{ hotel_req.num_adults }}, Children: {{ hotel_req.num_children }}</dd>
+
+                    <dt class="col-sm-4">Number of Rooms:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.num_rooms }}</dd>
+
+                    <dt class="col-sm-4">Room Type Preference:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.room_type_preference if hotel_req.room_type_preference else 'N/A' }}</dd>
+
+                    <dt class="col-sm-4">Hotel Preferences:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.hotel_preferences|nl2br if hotel_req.hotel_preferences else 'N/A' }}</dd>
+
+                    <dt class="col-sm-4">Budget Per Night:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.budget_per_night if hotel_req.budget_per_night else 'N/A' }}</dd>
+
+                    <dt class="col-sm-4">Special Requests:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.special_requests|nl2br if hotel_req.special_requests else 'N/A' }}</dd>
+                    
+                    <dt class="col-sm-4">Submission Date:</dt>
+                    <dd class="col-sm-8">{{ hotel_req.submission_date.strftime('%Y-%m-%d %H:%M') if hotel_req.submission_date else 'N/A' }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Update Status & Notes</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.hotel_accommodation_request_details', request_id=hotel_req.id) }}">
+                    {{ form.hidden_tag() }} <!-- CSRF token -->
+                    
+                    {{ render_field(form.status, class="form-select") }}
+                    {{ render_field(form.admin_notes, class="form-control", rows=5, placeholder="Add internal notes here...") }}
+
+                    <div class="mt-3">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('admin.hotel_accommodation_requests_list') }}" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card shadow mb-4 mt-3">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Current Status & Notes</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Status:</strong> 
+                    <span class="badge 
+                        {% if hotel_req.status == 'Pending' %}bg-warning text-dark
+                        {% elif hotel_req.status == 'Options Sent' %}bg-info text-dark
+                        {% elif hotel_req.status == 'Awaiting Confirmation' %}bg-primary
+                        {% elif hotel_req.status == 'Booked & Confirmed' %}bg-success
+                        {% elif hotel_req.status == 'Stay Completed' %}bg-success
+                        {% elif hotel_req.status == 'On Hold' %}bg-dark
+                        {% elif hotel_req.status == 'Cancelled' %}bg-secondary
+                        {% else %}bg-light text-dark{% endif %}">{{ hotel_req.status }}</span>
+                </p>
+                {% if hotel_req.admin_notes %}
+                <hr class="my-2">
+                <p class="mb-1"><strong>Current Admin Notes:</strong></p>
+                <div style="white-space: pre-wrap; background-color: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                    {{ hotel_req.admin_notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

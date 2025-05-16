@@ -21,7 +21,7 @@ class NewsletterForm(FlaskForm):
     ], validators=[DataRequired()])
     
     scheduled_at = DateTimeField('Schedule Date and Time', 
-                               format='%Y-%m-%d %H:%M', 
+                               format='%Y-%m-%dT%H:%M',
                                default=(datetime.now() + timedelta(days=1)).replace(
                                    hour=9, minute=0, second=0, microsecond=0))
     

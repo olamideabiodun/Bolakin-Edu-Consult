@@ -1,0 +1,195 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin - {{ 'Create' if not form.instance else 'Edit' }} Blog Post{% endblock %}
+
+{% block header_title %}{{ 'Create New' if not form.instance else 'Edit' }} Blog Post{% endblock %}
+
+{% block extra_css %}
+<!-- Summernote WYSIWYG Editor CSS -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<style>
+    .note-editor {
+        margin-bottom: 20px; /* Add some space below the editor */
+    }
+    /* Ensure form-control styling doesn't conflict too much if Summernote doesn't override everything */
+    /* Temporarily remove this to debug, so the textarea is always visible */
+    /* 
+    .form-control.summernote {
+        display: none; 
+    }
+    */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card card-primary">
+    <div class="card-header">
+        <h3 class="card-title">Post Details</h3>
+    </div>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }} <!-- Includes CSRF token -->
+        <div class="card-body">
+            <div class="form-group">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                {% if form.title.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.title.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.slug.label(class="form-label") }}
+                {{ form.slug(class="form-control" + (" is-invalid" if form.slug.errors else ""), placeholder="Leave blank to auto-generate") }}
+                {% if form.slug.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.slug.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.content.label(class="form-label") }}
+                {# Add id="content_editor" and class="summernote" for Summernote initialization #}
+                {{ form.content(id="content_editor", class="form-control summernote" + (" is-invalid" if form.content.errors else ""), rows=10) }}
+                {% if form.content.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.content.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                {{ form.excerpt.label(class="form-label") }}
+                {{ form.excerpt(class="form-control" + (" is-invalid" if form.excerpt.errors else ""), rows=3) }}
+                {% if form.excerpt.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.excerpt.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.categories.label(class="form-label") }} (Hold Ctrl/Cmd to select multiple)
+                {{ form.categories(class="form-control select2" + (" is-invalid" if form.categories.errors else ""), multiple=True) }}
+                {% if form.categories.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.categories.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.featured_image.label(class="form-label") }}
+                {% if form.featured_image.data and post and post.featured_image %}
+                    <p><small>Current: <a href="{{ url_for('main.uploaded_file', subpath=post.featured_image) }}" target="_blank">{{ post.featured_image }}</a></small></p>
+                {% elif post and post.featured_image %}
+                    <p><small>Current: <a href="{{ url_for('main.uploaded_file', subpath=post.featured_image) }}" target="_blank">{{ post.featured_image }}</a></small></p>
+                {% endif %}
+                {{ form.featured_image(class="form-control" + (" is-invalid" if form.featured_image.errors else "")) }}
+                {% if form.featured_image.errors %}
+                    <div class="invalid-feedback">{% for error in form.featured_image.errors %}{{ error }}{% endfor %}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.hero_background_image.label(class="form-label") }}
+                {% if form.hero_background_image.data and post and post.hero_background_image %}
+                    <p><small>Current: <a href="{{ url_for('main.uploaded_file', subpath=post.hero_background_image) }}" target="_blank">{{ post.hero_background_image }}</a></small></p>
+                {% elif post and post.hero_background_image %}
+                    <p><small>Current: <a href="{{ url_for('main.uploaded_file', subpath=post.hero_background_image) }}" target="_blank">{{ post.hero_background_image }}</a></small></p>
+                {% endif %}
+                {{ form.hero_background_image(class="form-control" + (" is-invalid" if form.hero_background_image.errors else "")) }}
+                {% if form.hero_background_image.errors %}
+                    <div class="invalid-feedback">{% for error in form.hero_background_image.errors %}{{ error }}{% endfor %}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-check">
+                {{ form.is_published(class="form-check-input") }}
+                {{ form.is_published.label(class="form-check-label") }}
+            </div>
+
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">{{ 'Create Post' if not form.instance else 'Update Post' }}</button>
+            <a href="{{ url_for('admin.blog_posts') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<!-- Summernote WYSIWYG Editor JS -->
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize Summernote for the blog content editor
+    $('#content_editor').summernote({
+        height: 350, // Set height
+        toolbar: [
+            // [groupName, [list of button]]
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear']],
+            ['fontname', ['fontname']],
+            ['fontsize', ['fontsize']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph', 'height']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'video', 'hr']], // Added video
+            ['view', ['fullscreen', 'codeview', 'help']],
+            // Consider adding file upload if Summernote supports it directly or via plugin
+            // For now, focusing on images and standard features.
+        ],
+        callbacks: {
+            onImageUpload: function(files) {
+                var editor = $(this); // Keep track of the editor instance
+                var formData = new FormData();
+                formData.append("file", files[0]);
+                
+                // Get CSRF token
+                var csrfToken = $('input[name="csrf_token"]').val();
+
+                $.ajax({
+                    url: '{{ url_for("admin.upload_blog_image") }}', // New endpoint for blog images
+                    method: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    beforeSend: function(xhr) {
+                        if (csrfToken) {
+                            xhr.setRequestHeader('X-CSRFToken', csrfToken);
+                        }
+                    },
+                    success: function(url) {
+                        editor.summernote('insertImage', url);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        var errorMessage = 'Error uploading image.';
+                        if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                            errorMessage = jqXHR.responseJSON.error;
+                        } else if (jqXHR.responseText) {
+                            // If not JSON, maybe the raw response is the URL or an error string
+                             try {
+                                let errData = JSON.parse(jqXHR.responseText);
+                                if(errData.error) errorMessage = errData.error;
+                            } catch(e) {
+                                // If it's not JSON and not a direct URL, it's an unknown error
+                                console.warn("Raw error response:", jqXHR.responseText);
+                            }
+                        }
+                        alert(errorMessage);
+                        console.error('Blog image upload error:', textStatus, errorThrown, jqXHR.responseText);
+                    }
+                });
+            }
+        }
+    });
+
+    // Optional: If you are using Select2 for categories, initialize it
+    // $('.select2').select2();
+});
+</script>
+{% endblock %} 

@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get the email input
             const emailInput = this.querySelector('input[name="email"]');
             const email = emailInput.value.trim();
+            const csrfTokenInput = this.querySelector('input[name="csrf_token"]');
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
             
             // Basic email validation
             if (!validateEmail(email)) {
@@ -33,9 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken 
                 },
                 body: new URLSearchParams({
-                    'email': email
+                    'email': email,
+                    'csrf_token': csrfToken
                 })
             })
             .then(response => {

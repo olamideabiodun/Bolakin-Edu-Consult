@@ -36,6 +36,31 @@
                         <i class="fas fa-graduation-cap"></i> Applications
                     </a>
                 </li>
+                <li class="{% if 'visa_requests' in request.endpoint or 'visa_request_details' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.visa_requests_list') }}">
+                        <i class="fas fa-passport"></i> Visa Requests
+                    </a>
+                </li>
+                <li class="{% if 'flight_bookings' in request.endpoint or 'flight_booking_details' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.flight_bookings_list') }}">
+                        <i class="fas fa-plane-departure"></i> Flight Bookings
+                    </a>
+                </li>
+                <li class="{% if 'proof_of_funds_requests' in request.endpoint or 'proof_of_funds_details' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.proof_of_funds_requests_list') }}">
+                        <i class="fas fa-file-invoice-dollar"></i> Proof of Funds Requests
+                    </a>
+                </li>
+                <li class="{% if 'holiday_package_requests' in request.endpoint or 'holiday_package_request_details' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.holiday_package_requests_list') }}">
+                        <i class="fas fa-suitcase-rolling"></i> Holiday Package Requests
+                    </a>
+                </li>
+                <li class="{% if 'hotel_accommodation_requests' in request.endpoint or 'hotel_accommodation_request_details' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('admin.hotel_accommodation_requests_list') }}">
+                        <i class="fas fa-hotel"></i> Hotel/Accommodation Requests
+                    </a>
+                </li>
                 <li class="{% if 'newsletters' in request.endpoint %}active{% endif %}">
                     <a href="{{ url_for('admin.newsletters') }}">
                         <i class="fas fa-newspaper"></i> Newsletters
@@ -51,6 +76,24 @@
                         <i class="fas fa-users"></i> Users
                     </a>
                 </li>
+                <!-- Blog Management Section -->
+                <li class="nav-item dropdown {% if 'blog' in request.endpoint %}active{% endif %}">
+                    <a href="#blogSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                        <i class="fas fa-blog"></i> Blog Management
+                    </a>
+                    <ul class="collapse list-unstyled {% if 'blog' in request.endpoint %}show{% endif %}" id="blogSubmenu">
+                        <li class="{% if request.endpoint == 'admin.blog_posts' %}active{% endif %}">
+                            <a href="{{ url_for('admin.blog_posts') }}" class="nav-link">Posts</a>
+                        </li>
+                        <li class="{% if request.endpoint == 'admin.blog_categories' %}active{% endif %}">
+                            <a href="{{ url_for('admin.blog_categories') }}" class="nav-link">Categories</a>
+                        </li>
+                        <li class="{% if request.endpoint == 'admin.blog_comments' %}active{% endif %}">
+                            <a href="{{ url_for('admin.blog_comments') }}" class="nav-link">Comments</a>
+                        </li>
+                    </ul>
+                </li>
+                <!-- End Blog Management Section -->
                 <li>
                     <a href="{{ url_for('auth.change_password') }}">
                         <i class="fas fa-key"></i> Change Password
@@ -64,7 +107,18 @@
             </ul>
 
             <div class="sidebar-footer">
-                <p>Logged in as: {{ current_user.username }}</p>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.profile_image_file %}
+                        <img src="{{ url_for('main.uploaded_file', subpath=current_user.profile_image_file) }}" 
+                             alt="{{ current_user.username }}" class="rounded-circle me-2" 
+                             style="width: 30px; height: 30px; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/default_avatar.png') }}" 
+                             alt="Default Avatar" class="rounded-circle me-2" 
+                             style="width: 30px; height: 30px; object-fit: cover;">
+                    {% endif %}
+                    <span>Logged in as: {{ current_user.username }}</span>
+                {% endif %}
             </div>
         </nav>
 
