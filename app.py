@@ -8,6 +8,7 @@ from datetime import datetime
 from config import config
 from models import db, User, PageVisit
 from flask_wtf.csrf import CSRFProtect
+from markupsafe import Markup # Changed from jinja2 import Markup
 
 # Initialize extensions
 login_manager = LoginManager()
@@ -34,6 +35,14 @@ def create_app(config_name=None):
     mail.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
+
+    # Define and register nl2br filter
+    def nl2br_filter(value):
+        if value is None:
+            return ''
+        return Markup(str(value).replace('\n', '<br>\n'))
+
+    app.jinja_env.filters['nl2br'] = nl2br_filter
     
     # Register blueprints
     from routes.main import main as main_blueprint
@@ -122,7 +131,7 @@ def register_error_handlers(app):
     
     @app.errorhandler(400)
     def bad_request(e):
-        return render_template('errors/500.html'), 400  # Redirect to 500
+        return render_template('errors/404.html'), 400  # Changed to render 404.html
 
     return app
 

@@ -1,11 +1,23 @@
-{% macro render_field(field, **kwargs) %}
-  {% set label_visible = kwargs.pop('label_visible', true) %}
-  {% set class_to_use = kwargs.pop('class', '') %}
+{% macro render_field(field, attrs={}) %}
+  {% set label_visible = attrs.get('label_visible', true) %}
+  {% set class_to_use = attrs.get('class', '') %}
+  {% set placeholder = attrs.get('placeholder', '') %}
+  {% set required = attrs.get('required', false) %}
+  {% set rows = attrs.get('rows', false) %}
+  {% set id_to_use = attrs.get('id', field.id) %}
+
   <div class="form-group mb-3">
     {% if label_visible %}
-      {{ field.label(class="form-label") }}
+      {{ field.label(class="form-label", for=id_to_use) }}
     {% endif %}
-    {{ field(class=class_to_use, **kwargs) }}
+    {# Pass specific attributes that WTForms fields accept directly #}
+    {# Any other attributes in 'attrs' not explicitly handled would be ignored by the field() call #}
+    {# unless the field type specifically processes them. #}
+    {% if rows %}
+      {{ field(class=class_to_use, id=id_to_use, placeholder=placeholder, required=required, rows=rows, **attrs.get('extra_attrs', {})) }}
+    {% else %}
+      {{ field(class=class_to_use, id=id_to_use, placeholder=placeholder, required=required, **attrs.get('extra_attrs', {})) }}
+    {% endif %}
     {% if field.errors %}
       <div class="invalid-feedback d-block">
         {% for error in field.errors %}
@@ -19,17 +31,21 @@
   </div>
 {% endmacro %}
 
-{% macro render_submit_field(field, class="btn btn-primary") %}
+{% macro render_submit_field(field, attrs={}) %}
+  {% set class_to_use = attrs.get('class', 'btn btn-primary') %}
   <div class="form-group mb-3">
-    {{ field(class=class) }}
+    {{ field(class=class_to_use, **attrs.get('extra_attrs', {})) }}
   </div>
 {% endmacro %}
 
-{% macro render_checkbox_field(field, label_visible=true) %}
+{% macro render_checkbox_field(field, attrs={}) %}
+  {% set label_visible = attrs.get('label_visible', true) %}
+  {% set class_to_use = attrs.get('class', 'form-check-input') %} {# Default to form-check-input #}
+  {% set id_to_use = attrs.get('id', field.id) %}
   <div class="form-check mb-3">
-    {{ field(class="form-check-input") }}
+    {{ field(class=class_to_use, id=id_to_use, **attrs.get('extra_attrs', {})) }}
     {% if label_visible %}
-      {{ field.label(class="form-check-label") }}
+      {{ field.label(class="form-check-label", for=id_to_use) }}
     {% endif %}
     {% if field.errors %}
       <div class="invalid-feedback d-block">
@@ -44,7 +60,8 @@
   </div>
 {% endmacro %}
 
-{% macro render_radio_field(field, label_visible=true) %}
+{% macro render_radio_field(field, attrs={}) %}
+    {% set label_visible = attrs.get('label_visible', true) %}
     <div class="form-group mb-3">
         {% if label_visible %}
             <label class="form-label">{{ field.label.text }}</label>
@@ -52,8 +69,9 @@
         <div>
         {% for subfield in field %}
             <div class="form-check form-check-inline">
-                {{ subfield(class="form-check-input") }}
-                {{ subfield.label(class="form-check-label") }}
+                {# Each subfield is a radio button, apply classes here #}
+                {{ subfield(class=attrs.get('subfield_class', 'form-check-input'), **attrs.get('extra_subfield_attrs', {})) }}
+                {{ subfield.label(class=attrs.get('subfield_label_class', 'form-check-label')) }}
             </div>
         {% endfor %}
         </div>

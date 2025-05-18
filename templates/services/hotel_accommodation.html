@@ -1,2 +1,111 @@
 {% extends "base.html" %}
 {% from "components/_form_macros.html" import render_field %} 
+
+{% block title %}{{ title }} - Bolakin Edu-Consult{% endblock %}
+
+{% block extra_css %}
+<style>
+    .service-form-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 30px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .service-form-container h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+    }
+    .form-group label {
+        font-weight: 600;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #FF9933;
+        box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.25);
+    }
+    .btn-primary {
+        background-color: #FF9933;
+        border-color: #FF9933;
+        padding: 10px 20px;
+        font-size: 1.1em;
+    }
+    .btn-primary:hover {
+        background-color: #FF8C00;
+        border-color: #FF8C00;
+    }
+    .guest-room-fields .form-group {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="service-form-container">
+    <h1>{{ title }}</h1>
+    <p class="text-muted text-center mb-4">Let us help you find the perfect accommodation for your trip. Fill in your details below.</p>
+    
+    <form method="POST" action="{{ url_for('main.hotel_accommodation_request') }}" novalidate>
+        {{ form.hidden_tag() }} <!-- CSRF token -->
+
+        {{ render_field(form.full_name, attrs={'class': "form-control", 'placeholder': "Enter your full name"}) }}
+        {{ render_field(form.email, attrs={'class': "form-control", 'placeholder': "your.email@example.com"}) }}
+        {{ render_field(form.phone, attrs={'class': "form-control", 'placeholder': "+1234567890"}) }}
+        
+        {{ render_field(form.destination_city_hotel, attrs={'class': "form-control", 'placeholder': "e.g., Paris, France or Hilton Times Square"}) }}
+
+        <div class="row">
+            <div class="col-md-6">
+                {{ render_field(form.check_in_date, attrs={'class': "form-control", 'id': 'check_in_date'}) }}
+            </div>
+            <div class="col-md-6">
+                {{ render_field(form.check_out_date, attrs={'class': "form-control", 'id': 'check_out_date'}) }}
+            </div>
+        </div>
+
+        <label class="form-label">Guests & Rooms</label>
+        <div class="row guest-room-fields mb-3">
+            <div class="col-md-4">
+                {{ render_field(form.num_adults, attrs={'class': "form-select"}) }}
+            </div>
+            <div class="col-md-4">
+                {{ render_field(form.num_children, attrs={'class': "form-select"}) }}
+            </div>
+            <div class="col-md-4">
+                {{ render_field(form.num_rooms, attrs={'class': "form-select"}) }}
+            </div>
+        </div>
+        
+        {{ render_field(form.room_type_preference, attrs={'class': "form-select"}) }}
+        {{ render_field(form.hotel_preferences, attrs={'class': "form-control", 'rows': 3, 'placeholder': "e.g., 4-star or 5-star, near city center, pool, gym, breakfast included"}) }}
+        {{ render_field(form.budget_per_night, attrs={'class': "form-control", 'placeholder': "e.g., $100-$150 USD, or 50,000 NGN"}) }}
+        {{ render_field(form.special_requests, attrs={'class': "form-control", 'rows': 3, 'placeholder': "e.g., Early check-in, late check-out, dietary needs, accessibility"}) }}
+
+        <div class="text-center mt-4">
+            {{ form.submit(class="btn btn-primary btn-lg") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInDateField = document.getElementById('check_in_date');
+    const checkOutDateField = document.getElementById('check_out_date');
+
+    if (checkInDateField && checkOutDateField) {
+        checkInDateField.addEventListener('change', function() {
+            if (checkInDateField.value) {
+                checkOutDateField.min = checkInDateField.value;
+                // If check_out_date is already set and earlier than new check_in_date, clear it or adjust it
+                if (checkOutDateField.value && checkOutDateField.value < checkInDateField.value) {
+                    checkOutDateField.value = ''; // Or set to checkInDateField.value, depending on desired UX
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

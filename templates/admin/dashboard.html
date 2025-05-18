@@ -220,8 +220,8 @@
         if (chartElement) {
             var ctx = chartElement.getContext('2d');
             // Get data from Jinja as strings and parse them properly
-            var visitDates = {{ visit_dates | safe }};
-            var visitCounts = {{ visit_counts | safe }};
+            var visitDates = {{ visit_dates | tojson }};
+            var visitCounts = {{ visit_counts | tojson }};
             
             new Chart(ctx, {
                 type: 'line',

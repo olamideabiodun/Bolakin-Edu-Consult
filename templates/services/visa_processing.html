@@ -7,21 +7,22 @@
 <style>
     .service-form-container {
         max-width: 800px;
-        margin: 40px auto;
+        margin: 20px auto; /* Reduced top margin for when it's part of a larger page */
         padding: 30px;
-        background-color: #fff;
+        background-color: #f9f9f9; /* Light background for the form section */
         border-radius: 8px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        display: none; /* Initially hidden */
     }
-    .service-form-container h1 {
+    .service-form-container h2 { /* Changed from h1 to h2 for form title */
         text-align: center;
         color: #333;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
     }
     .form-group label {
         font-weight: 600;
     }
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
         border-color: #FF9933;
         box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.25);
     }
@@ -35,69 +36,272 @@
         background-color: #FF8C00;
         border-color: #FF8C00;
     }
-    /* Optional: JavaScript to show/hide 'Other Visa Type' field */
-    #other_visa_type_field {
-        display: none; /* Initially hidden */
-        margin-top: 10px;
+    /* Styles for content sections - similar to admission.html */
+    .visa-hero {
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url({{ url_for('static', filename='images/image.png') }}); /* Updated background image */
+        background-size: cover;
+        background-position: center;
+        color: #fff;
+        padding: 80px 0;
+        text-align: center;
+    }
+    .visa-hero h1 {
+        font-size: 3em;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    .visa-hero p {
+        font-size: 1.2em;
+        margin-bottom: 30px;
+    }
+    .content-section {
+        padding: 60px 0;
+        text-align: center; /* Center align for simple sections */
+    }
+    .content-section h2 {
+        font-size: 2.5em;
+        color: #333;
+        margin-bottom: 40px;
+        position: relative;
+    }
+     .content-section h2::after {
+        content: '';
+        display: block;
+        width: 60px;
+        height: 3px;
+        background-color: #FF9933;
+        margin: 10px auto 0;
+    }
+    .content-section .container p {
+        font-size: 1.1em;
+        color: #555;
+        line-height: 1.8;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 30px;
+    }
+    .cta-button {
+        background-color: #FF9933;
+        color: white;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 1.2em;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+        display: inline-block; /* For centering */
+    }
+    .cta-button:hover {
+        background-color: #FF8C00;
+        color: white;
+    }
+    .cta-wrapper { /* For centering the button */
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 40px;
+    }
+
+    /* Style for other_visa_type field (if needed again) */
+    #other_visa_type_group {
+        display: none; /* Hidden by default */
+    }
+
+    /* Modal Styles - Assuming similar to admission_form.css or style.css */
+    /* If these are not globally available, they need to be defined or imported */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; 
+        z-index: 1000; 
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100%; 
+        overflow: auto; 
+        background-color: rgba(0,0,0,0.6); 
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto; 
+        padding: 30px;
+        border: 1px solid #888;
+        width: 80%; 
+        max-width: 800px; 
+        border-radius: 10px;
+        position: relative;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        animation-name: slideInModal; /* Animation for modal */
+        animation-duration: 0.5s;
+    }
+    @keyframes slideInModal {
+        from {top: -300px; opacity: 0}
+        to {top: 0; opacity: 1} /* Adjust top for final position if needed */
+    }
+    .close-btn {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+    }
+    .close-btn:hover,
+    .close-btn:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .modal-form-header h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 10px; /* Reduced from 25px */
+    }
+    .modal-form-header p {
+        text-align: center;
+        color: #666;
+        margin-bottom: 25px;
+    }
+
+    /* Form field styling within the modal (can reuse some .service-form-container styles if applicable) */
+    .modal-content .form-group label {
+        font-weight: 600;
+    }
+    .modal-content .form-control:focus, .modal-content .form-select:focus {
+        border-color: #FF9933;
+        box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.25);
+    }
+    .modal-content .btn-primary {
+        background-color: #FF9933;
+        border-color: #FF9933;
+        padding: 10px 20px;
+        font-size: 1.1em;
+    }
+    .modal-content .btn-primary:hover {
+        background-color: #FF8C00;
+        border-color: #FF8C00;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="service-form-container">
-    <h1>{{ title }}</h1>
-    <p class="text-muted text-center mb-4">Please fill out the form below to request our visa processing services. We'll get back to you as soon as possible.</p>
+<main>
+    <section class="visa-hero">
+        <div class="container">
+            <h1 class="animate__animated animate__fadeInDown">Visa Processing Services</h1>
+            <p class="animate__animated animate__fadeInUp">Navigate the complexities of visa applications with our expert guidance. Bolakin Edu-Consult ensures a smooth and successful visa acquisition process.</p>
+             <div class="cta-wrapper animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
+                <span id="showVisaFormBtn" class="cta-button">Apply for Visa Assistance</span> <!-- Changed <a> to <span> for JS handling -->
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section" data-aos="fade-up">
+        <div class="container">
+            <h2>Why Choose Us for Your Visa Needs?</h2>
+            <p>Our experienced consultants provide personalized support, up-to-date information on visa requirements, and meticulous application checking to maximize your chances of success. We handle various visa types for multiple destinations.</p>
+            <!-- Add more content here like types of visas, countries, process overview -->
+        </div>
+    </section>
     
-    <form method="POST" action="{{ url_for('main.visa_processing_request') }}" novalidate>
-        {{ form.hidden_tag() }} <!-- CSRF token -->
+    <section class="content-section" data-aos="fade-up">
+        <div class="container">
+            <h2>Our Visa Processing Steps</h2>
+            <p>1. Initial Consultation & Assessment<br>2. Document Preparation & Review<br>3. Application Submission<br>4. Interview Coaching (if applicable)<br>5. Post-Approval Support</p>
+        </div>
+    </section>
 
-        {{ render_field(form.full_name, class="form-control", placeholder="Enter your full name") }}
-        {{ render_field(form.email, class="form-control", placeholder="your.email@example.com") }}
-        {{ render_field(form.phone, class="form-control", placeholder="+1234567890") }}
-        {{ render_field(form.destination_country, class="form-control", placeholder="e.g., Canada, USA, UK") }}
-        
-        <div class="form-group mb-3">
-            {{ form.visa_type.label(class="form-label") }}
-            {{ form.visa_type(class="form-select" + (" is-invalid" if form.visa_type.errors else ""), id="visa_type_select") }}
-            {% if form.visa_type.errors %}
-                <div class="invalid-feedback">
-                    {% for error in form.visa_type.errors %}{{ error }}{% endfor %}
+    <!-- Visa Request Form Modal -->
+    <div id="visaFormModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeVisaFormBtn">&times;</span>
+            <div class="modal-form-header">
+                <h2>{{ title }}</h2> <!-- Re-using the title passed from the route -->
+                <p>Please fill out the form below to request our visa processing services.</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('main.visa_processing_request') }}" novalidate>
+                {{ form.hidden_tag() }} <!-- CSRF token -->
+
+                {{ render_field(form.full_name, attrs={'class': "form-control", 'placeholder': "Enter your full name"}) }}
+                {{ render_field(form.email, attrs={'class': "form-control", 'placeholder': "your.email@example.com"}) }}
+                {{ render_field(form.phone, attrs={'class': "form-control", 'placeholder': "+1234567890"}) }}
+                {{ render_field(form.destination_country, attrs={'class': "form-control", 'placeholder': "e.g., Canada, USA, UK"}) }}
+                
+                <div class="form-group mb-3">
+                    {{ form.visa_type.label(class="form-label") }}
+                    {{ form.visa_type(class="form-select" + (" is-invalid" if form.visa_type.errors else ""), id="visa_type_select") }}
+                    {% if form.visa_type.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.visa_type.errors %}
+                                <span>{{ error }}</span><br>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-            {% endif %}
-        </div>
+                
+                <div class="form-group mb-3" id="other_visa_type_group">
+                    {{ render_field(form.other_visa_type, attrs={'class': "form-control", 'placeholder': "Please specify visa type"}) }}
+                </div>
 
-        <div id="other_visa_type_field" class="form-group mb-3">
-            {{ render_field(form.other_visa_type, class="form-control", placeholder="Please specify the visa type") }}
-        </div>
+                {{ render_field(form.preferred_appointment_date, attrs={'class': "form-control datepicker"}) }}
+                {{ render_field(form.message, attrs={'class': "form-control", 'rows': 4, 'placeholder': "Any additional information or specific questions?"}) }}
 
-        {{ render_field(form.preferred_appointment_date, class="form-control") }}
-        {{ render_field(form.message, class="form-control", rows=5, placeholder="Tell us more about your visa needs...") }}
-
-        <div class="text-center mt-4">
-            {{ form.submit(class="btn btn-primary btn-lg") }}
+                <div class="text-center mt-4">
+                    {{ form.submit(class="btn btn-primary btn-lg") }}
+                </div>
+            </form>
         </div>
-    </form>
-</div>
+    </div>
+</main>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const showFormButton = document.getElementById('showVisaFormBtn');
+    const visaFormModal = document.getElementById('visaFormModal');
+    const closeFormButton = document.getElementById('closeVisaFormBtn');
+    
     const visaTypeSelect = document.getElementById('visa_type_select');
-    const otherVisaTypeField = document.getElementById('other_visa_type_field');
+    const otherVisaTypeGroup = document.getElementById('other_visa_type_group');
 
-    if (visaTypeSelect && otherVisaTypeField) {
+    if (showFormButton && visaFormModal) {
+        showFormButton.addEventListener('click', function() {
+            visaFormModal.style.display = 'block';
+        });
+    }
+
+    if (closeFormButton && visaFormModal) {
+        closeFormButton.addEventListener('click', function() {
+            visaFormModal.style.display = 'none';
+        });
+    }
+
+    // Close modal if user clicks outside of the modal content
+    window.addEventListener('click', function(event) {
+        if (event.target == visaFormModal) {
+            visaFormModal.style.display = 'none';
+        }
+    });
+
+    if (visaTypeSelect && otherVisaTypeGroup) {
         function toggleOtherVisaField() {
             if (visaTypeSelect.value === 'Other') {
-                otherVisaTypeField.style.display = 'block';
+                otherVisaTypeGroup.style.display = 'block';
             } else {
-                otherVisaTypeField.style.display = 'none';
+                otherVisaTypeGroup.style.display = 'none';
             }
         }
-        // Initial check
-        toggleOtherVisaField();
-        // Add event listener
+        toggleOtherVisaField(); // Initial check
         visaTypeSelect.addEventListener('change', toggleOtherVisaField);
+    }
+    
+    if (typeof AOS !== 'undefined') {
+        AOS.init({
+            duration: 800,
+            once: true
+        });
     }
 });
 </script>

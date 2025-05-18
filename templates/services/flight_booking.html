@@ -1,121 +1,53 @@
 {% extends "base.html" %}
 {% from "components/_form_macros.html" import render_field %}
 
-{% block title %}{{ title }} - Bolakin Edu-Consult{% endblock %}
+{% block title %}DEBUG: {{ title }} - Bolakin Edu-Consult{% endblock %}
 
 {% block extra_css %}
 <style>
-    .service-form-container {
-        max-width: 800px;
-        margin: 40px auto;
-        padding: 30px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    }
-    .service-form-container h1 {
-        text-align: center;
-        color: #333;
-        margin-bottom: 30px;
-    }
-    .form-group label {
-        font-weight: 600;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #FF9933;
-        box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.25);
-    }
-    .btn-primary {
-        background-color: #FF9933;
-        border-color: #FF9933;
-        padding: 10px 20px;
-        font-size: 1.1em;
-    }
-    .btn-primary:hover {
-        background-color: #FF8C00;
-        border-color: #FF8C00;
-    }
-    .passenger-count-fields {
-        display: flex;
-        gap: 15px;
-    }
-    .passenger-count-fields .form-group {
-        flex: 1;
-    }
+    /* Styles temporarily removed for debugging */
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="service-form-container">
-    <h1>{{ title }}</h1>
-    <p class="text-muted text-center mb-4">Please fill out the form below to request our flight booking services. We'll find the best options for you.</p>
+    <h1>DEBUG: Flight Booking Page Test</h1>
+    <p>If you see this, the basic template rendering is working.</p>
     
-    <form method="POST" action="{{ url_for('main.flight_booking_request') }}" novalidate>
-        {{ form.hidden_tag() }} <!-- CSRF token -->
+    <hr>
+    <h2>Form Title Variable:</h2>
+    <p>{{ title }}</p>
 
-        {{ render_field(form.full_name, class="form-control", placeholder="Enter your full name") }}
-        {{ render_field(form.email, class="form-control", placeholder="your.email@example.com") }}
-        {{ render_field(form.phone, class="form-control", placeholder="+1234567890") }}
-        
-        <div class="row">
-            <div class="col-md-6">
-                {{ render_field(form.departure_city, class="form-control", placeholder="e.g., Lagos") }}
-            </div>
-            <div class="col-md-6">
-                {{ render_field(form.arrival_city, class="form-control", placeholder="e.g., London") }}
-            </div>
-        </div>
+    <hr>
+    <h2>Form Object (exists?):</h2>
+    <p>{{ "Form object exists" if form else "Form object NOT passed or is None" }}</p>
 
-        <div class="row">
-            <div class="col-md-6">
-                {{ render_field(form.departure_date, class="form-control") }}
-            </div>
-            <div class="col-md-6">
-                {{ render_field(form.return_date, class="form-control") }}
-            </div>
-        </div>
+    {% if form %}
+        <hr>
+        <h2>Attempting to render just one field (full_name):</h2>
+        <form method="POST" action=""> <!-- Dummy action -->
+            {{ form.hidden_tag() }}
+            {% if form.full_name %}
+                <p>form.full_name exists. Rendering with macro:</p>
+                {{ render_field(form.full_name, attrs={'class': "form-control", 'placeholder': "Test Full Name"}) }}
+            {% else %}
+                <p>form.full_name does NOT exist.</p>
+            {% endif %}
+            
+            {% if form.submit %}
+                 <p>form.submit exists. Rendering directly:</p>
+                {{ form.submit(class="btn btn-primary") }}
+            {% else %}
+                <p>form.submit does NOT exist.</p>
+            {% endif %}
+        </form>
+    {% endif %}
 
-        {{ render_field(form.trip_type, class="form-select") }}
-
-        <label class="form-label">Number of Passengers</label>
-        <div class="passenger-count-fields mb-3">
-            {{ render_field(form.adults, class="form-select") }}
-            {{ render_field(form.children, class="form-select") }}
-            {{ render_field(form.infants, class="form-select") }}
-        </div>
-        
-        {{ render_field(form.cabin_class, class="form-select") }}
-        {{ render_field(form.flexible_dates, class="form-check-input") }}
-        {{ render_field(form.message, class="form-control", rows=5, placeholder="Any specific preferences or additional information?") }}
-
-        <div class="text-center mt-4">
-            {{ form.submit(class="btn btn-primary btn-lg") }}
-        </div>
-    </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Optional: Add any JavaScript specific to this form if needed in the future.
-// For example, dynamically showing/hiding the return date based on trip type.
-document.addEventListener('DOMContentLoaded', function() {
-    const tripTypeSelect = document.getElementById('trip_type');
-    const returnDateGroup = document.getElementById('return_date_group'); // Assuming you wrap return_date field in a div with this ID
-
-    if (tripTypeSelect && returnDateGroup) {
-        function toggleReturnDate() {
-            if (tripTypeSelect.value === 'One Way') {
-                returnDateGroup.style.display = 'none';
-            } else {
-                returnDateGroup.style.display = 'block';
-            }
-        }
-        // Initial check
-        toggleReturnDate();
-        // Add event listener
-        tripTypeSelect.addEventListener('change', toggleReturnDate);
-    }
-});
+    console.log("Flight booking debug template JS loaded.");
 </script>
 {% endblock %} 

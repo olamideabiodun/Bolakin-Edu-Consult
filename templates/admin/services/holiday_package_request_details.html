@@ -1,5 +1,5 @@
 {% extends "admin/base.html" %}
-{% from "_form_macros.html" import render_field %}
+{% from "components/_form_macros.html" import render_field %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -8,85 +8,12 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-8">
+        <!-- Holiday Package Request Details Card -->
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Holiday Package Request Information</h6>
-            </div>
-            <div class="card-body">
-                <dl class="row">
-                    <dt class="col-sm-4">Request ID:</dt>
-                    <dd class="col-sm-8">{{ package_req.id }}</dd>
-
-                    <dt class="col-sm-4">Full Name:</dt>
-                    <dd class="col-sm-8">{{ package_req.full_name }}</dd>
-
-                    <dt class="col-sm-4">Email Address:</dt>
-                    <dd class="col-sm-8">{{ package_req.email }}</dd>
-
-                    <dt class="col-sm-4">Phone Number:</dt>
-                    <dd class="col-sm-8">{{ package_req.phone }}</dd>
-
-                    <dt class="col-sm-4">Destination(s):</dt>
-                    <dd class="col-sm-8">{{ package_req.destination }}</dd>
-
-                    <dt class="col-sm-4">Travel Dates Flexible:</dt>
-                    <dd class="col-sm-8">{{ 'Yes' if package_req.travel_dates_flexible else 'No' }}</dd>
-
-                    <dt class="col-sm-4">Preferred Start Date:</dt>
-                    <dd class="col-sm-8">{{ package_req.preferred_start_date.strftime('%Y-%m-%d') if package_req.preferred_start_date else 'N/A' }}</dd>
-
-                    <dt class="col-sm-4">Preferred End Date:</dt>
-                    <dd class="col-sm-8">{{ package_req.preferred_end_date.strftime('%Y-%m-%d') if package_req.preferred_end_date else 'N/A' }}</dd>
-
-                    <dt class="col-sm-4">Approximate Duration:</dt>
-                    <dd class="col-sm-8">{{ package_req.duration_days if package_req.duration_days else 'N/A' }}{% if package_req.duration_days and package_req.duration_days is number %} days{% endif %}</dd>
-
-                    <dt class="col-sm-4">Travelers:</dt>
-                    <dd class="col-sm-8">Adults: {{ package_req.num_adults }}, Children: {{ package_req.num_children }}</dd>
-
-                    <dt class="col-sm-4">Package Type:</dt>
-                    <dd class="col-sm-8">{{ package_req.package_type if package_req.package_type else 'N/A' }}</dd>
-
-                    <dt class="col-sm-4">Interests/Activities:</dt>
-                    <dd class="col-sm-8">{{ package_req.interests|nl2br if package_req.interests else 'N/A' }}</dd>
-
-                    <dt class="col-sm-4">Budget Preference:</dt>
-                    <dd class="col-sm-8">{{ package_req.budget_preference if package_req.budget_preference else 'N/A' }}</dd>
-                    
-                    <dt class="col-sm-4">Submission Date:</dt>
-                    <dd class="col-sm-8">{{ package_req.submission_date.strftime('%Y-%m-%d %H:%M') if package_req.submission_date else 'N/A' }}</dd>
-                    
-                    <dt class="col-sm-4">Additional Message:</dt>
-                    <dd class="col-sm-8">{{ package_req.message|nl2br if package_req.message else 'N/A' }}</dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Update Status & Notes</h6>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('admin.holiday_package_request_details', request_id=package_req.id) }}">
-                    {{ form.hidden_tag() }} <!-- CSRF token -->
-                    
-                    {{ render_field(form.status, class="form-select") }}
-                    {{ render_field(form.admin_notes, class="form-control", rows=5, placeholder="Add internal notes here...") }}
-
-                    <div class="mt-3">
-                        {{ form.submit(class="btn btn-primary") }}
-                        <a href="{{ url_for('admin.holiday_package_requests_list') }}" class="btn btn-secondary">Back to List</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="card shadow mb-4 mt-3">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Current Status & Notes</h6>
-            </div>
-            <div class="card-body">
-                <p class="mb-1"><strong>Status:</strong> 
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Request #{{ package_req.id }}</h6>
+                <div>
+                    <span class="me-2">Status:</span>
                     <span class="badge 
                         {% if package_req.status == 'Pending' %}bg-warning text-dark
                         {% elif package_req.status == 'Consultation Scheduled' %}bg-info text-dark
@@ -97,17 +24,112 @@
                         {% elif package_req.status == 'Travel Completed' %}bg-success
                         {% elif package_req.status == 'On Hold' %}bg-dark
                         {% elif package_req.status == 'Cancelled' %}bg-secondary
-                        {% else %}bg-light text-dark{% endif %}">{{ package_req.status }}</span>
-                </p>
-                {% if package_req.admin_notes %}
-                <hr class="my-2">
-                <p class="mb-1"><strong>Current Admin Notes:</strong></p>
-                <div style="white-space: pre-wrap; background-color: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
-                    {{ package_req.admin_notes }}
+                        {% else %}bg-light text-dark{% endif %}">{{ package_req.status }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Contact Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Full Name:</strong> {{ package_req.full_name }}</p>
+                            <p><strong>Email:</strong> {{ package_req.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Phone:</strong> {{ package_req.phone }}</p>
+                            <p><strong>Submission Date:</strong> {{ package_req.submission_date.strftime('%Y-%m-%d %H:%M') if package_req.submission_date else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Package Details</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Destination(s):</strong> {{ package_req.destination }}</p>
+                            <p><strong>Travel Dates Flexible:</strong> {{ 'Yes' if package_req.travel_dates_flexible else 'No' }}</p>
+                            <p><strong>Preferred Start Date:</strong> {{ package_req.preferred_start_date.strftime('%Y-%m-%d') if package_req.preferred_start_date else 'N/A' }}</p>
+                            <p><strong>Preferred End Date:</strong> {{ package_req.preferred_end_date.strftime('%Y-%m-%d') if package_req.preferred_end_date else 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Approximate Duration:</strong> {{ package_req.duration_days if package_req.duration_days else 'N/A' }}{% if package_req.duration_days and package_req.duration_days is number %} days{% endif %}</p>
+                            <p><strong>Travelers:</strong> Adults: {{ package_req.num_adults }}, Children: {{ package_req.num_children }}</p>
+                            <p><strong>Package Type:</strong> {{ package_req.package_type if package_req.package_type else 'N/A' }}</p>
+                            <p><strong>Budget Preference:</strong> {{ package_req.budget_preference if package_req.budget_preference else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if package_req.interests %}
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">Interests/Activities</h5>
+                    <p>{{ package_req.interests|nl2br }}</p>
+                </div>
+                {% endif %}
+                
+                {% if package_req.message %}
+                <div class="mb-3">
+                    <h5 class="border-bottom pb-2">Additional Message</h5>
+                    <p>{{ package_req.message|nl2br }}</p>
                 </div>
                 {% endif %}
             </div>
         </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Update Status Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Update Status & Notes</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.holiday_package_request_details', request_id=package_req.id) }}">
+                    {{ form.hidden_tag() }} <!-- CSRF token -->
+                    
+                    {{ render_field(form.status, attrs={'class': 'form-select'}) }}
+                    {{ render_field(form.admin_notes, attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Add internal notes here...'}) }}
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary w-100 mb-2">Update Status</button>
+                        <a href="{{ url_for('admin.holiday_package_requests_list') }}" class="btn btn-secondary w-100 mb-2">
+                           <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        <a href="{{ url_for('main.holiday_package_request') }}" class="btn btn-info w-100" target="_blank">
+                            <i class="fas fa-eye"></i> View Public Page
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Navigation Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Service Navigation</h6>
+            </div>
+            <div class="card-body text-center">
+                <a href="{{ url_for('admin.visa_requests_list') }}" class="btn btn-sm btn-outline-primary mb-1">Visa Requests</a>
+                <a href="{{ url_for('admin.flight_bookings_list') }}" class="btn btn-sm btn-outline-secondary mb-1">Flight Bookings</a>
+                <a href="{{ url_for('admin.proof_of_funds_requests_list') }}" class="btn btn-sm btn-outline-info mb-1">Proof of Funds</a>
+                <a href="{{ url_for('admin.hotel_accommodation_requests_list') }}" class="btn btn-sm btn-outline-warning mb-1">Hotel Bookings</a>
+                <!-- Current page is Holiday Packages, so no link to itself -->
+            </div>
+        </div>
+
+        {% if package_req.admin_notes %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Current Admin Notes</h6>
+            </div>
+            <div class="card-body">
+                <div style="white-space: pre-wrap; background-color: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                    {{ package_req.admin_notes }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %} 

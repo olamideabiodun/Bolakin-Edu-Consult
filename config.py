@@ -18,7 +18,7 @@ class Config:
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'no-reply@bolakineduconsult.com')
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
     UPLOADS_FOLDER = os.environ.get('UPLOADS_FOLDER', 'uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload size
+    MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB max upload size
     
     # Site URL configuration - Used to replace hardcoded domain
     SITE_URL = os.environ.get('SITE_URL', 'https://bolakineduconsult.ng')

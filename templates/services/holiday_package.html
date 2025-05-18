@@ -52,40 +52,40 @@
     <form method="POST" action="{{ url_for('main.holiday_package_request') }}" novalidate>
         {{ form.hidden_tag() }} <!-- CSRF token -->
 
-        {{ render_field(form.full_name, class="form-control", placeholder="Enter your full name") }}
-        {{ render_field(form.email, class="form-control", placeholder="your.email@example.com") }}
-        {{ render_field(form.phone, class="form-control", placeholder="+1234567890") }}
+        {{ render_field(form.full_name, attrs={'class': "form-control", 'placeholder': "Enter your full name"}) }}
+        {{ render_field(form.email, attrs={'class': "form-control", 'placeholder': "your.email@example.com"}) }}
+        {{ render_field(form.phone, attrs={'class': "form-control", 'placeholder': "+1234567890"}) }}
         
-        {{ render_field(form.destination, class="form-control") }}
+        {{ render_field(form.destination, attrs={'class': "form-control"}) }}
 
         <div class="row mb-3 date-fields-group">
             <div class="col-md-4">
-                {{ render_field(form.travel_dates_flexible, class="form-select") }}
+                {{ render_field(form.travel_dates_flexible, attrs={'class': "form-select", 'id': 'travel_dates_flexible'}) }}
             </div>
             <div class="col-md-4">
-                {{ render_field(form.preferred_start_date, class="form-control") }}
+                {{ render_field(form.preferred_start_date, attrs={'class': "form-control", 'id': 'preferred_start_date'}) }}
             </div>
             <div class="col-md-4">
-                {{ render_field(form.preferred_end_date, class="form-control") }}
+                {{ render_field(form.preferred_end_date, attrs={'class': "form-control", 'id': 'preferred_end_date'}) }}
             </div>
         </div>
         
-        {{ render_field(form.duration_days, class="form-control") }}
+        {{ render_field(form.duration_days, attrs={'class': "form-control"}) }}
 
         <label class="form-label">Number of Travelers</label>
         <div class="row mb-3 passenger-fields-group">
             <div class="col-md-6">
-                {{ render_field(form.num_adults, class="form-select") }}
+                {{ render_field(form.num_adults, attrs={'class': "form-select"}) }}
             </div>
             <div class="col-md-6">
-                {{ render_field(form.num_children, class="form-select") }}
+                {{ render_field(form.num_children, attrs={'class': "form-select"}) }}
             </div>
         </div>
         
-        {{ render_field(form.package_type, class="form-select") }}
-        {{ render_field(form.interests, class="form-control", rows=3) }}
-        {{ render_field(form.budget_preference, class="form-select") }}
-        {{ render_field(form.message, class="form-control", rows=5) }}
+        {{ render_field(form.package_type, attrs={'class': "form-select"}) }}
+        {{ render_field(form.interests, attrs={'class': "form-control", 'rows': 3}) }}
+        {{ render_field(form.budget_preference, attrs={'class': "form-select"}) }}
+        {{ render_field(form.message, attrs={'class': "form-control", 'rows': 5}) }}
 
         <div class="text-center mt-4">
             {{ form.submit(class="btn btn-primary btn-lg") }}

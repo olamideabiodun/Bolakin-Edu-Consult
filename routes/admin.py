@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from sqlalchemy import desc, func, cast, Date
 from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage # Added FileStorage
 from models import db, User, Subscriber, AdmissionApplication, Newsletter, NewsletterDelivery, PageVisit, BlogPost, BlogCategory, BlogComment, UserSession, VisaRequest, FlightBookingRequest, ProofOfFundsRequest, HolidayPackageRequest, HotelAccommodationRequest
 from forms.newsletter_form import NewsletterForm
 from forms.blog_forms import BlogPostForm, BlogCategoryForm, BlogCommentForm
@@ -665,6 +666,7 @@ def users():
 @admin_required
 def create_user():
     """Create a new admin user"""
+    form = AdminUserUpdateForm() # Instantiate form for GET request
     if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')
@@ -698,7 +700,7 @@ def create_user():
             current_app.logger.error(f"Error creating user: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
     
-    return render_template('admin/user_form.html', title='Create User')
+    return render_template('admin/user_form.html', title='Create User', form=form) # Pass form to template
 
 @admin.route('/users/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -1054,7 +1056,7 @@ def edit_blog_post(id):
                 return render_template('admin/blog/create_edit_post.html', form=form, post=post, title='Edit Blog Post')
         
         # Handle featured image upload
-        if form.featured_image.data:
+        if form.featured_image.data and isinstance(form.featured_image.data, FileStorage):
             try:
                 uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog')
                 os.makedirs(uploads_folder, exist_ok=True)
@@ -1077,7 +1079,7 @@ def edit_blog_post(id):
                 flash('Error uploading featured image. The post will be updated without changing the featured image.', 'warning')
         
         # Handle hero background image upload
-        if form.hero_background_image.data:
+        if form.hero_background_image.data and isinstance(form.hero_background_image.data, FileStorage):
             try:
                 hero_uploads_folder = os.path.join(current_app.config['UPLOADS_FOLDER'], 'blog', 'hero_backgrounds')
                 os.makedirs(hero_uploads_folder, exist_ok=True)

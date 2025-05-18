@@ -1,5 +1,5 @@
 {% extends "admin/base.html" %}
-{% from "_form_macros.html" import render_field %}
+{% from "components/_form_macros.html" import render_field %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -9,37 +9,48 @@
 <div class="row">
     <div class="col-lg-8">
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Request Information</h6>
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Request #{{ visa_req.id }}</h6>
+                 <div>
+                    <span class="me-2">Status:</span>
+                    <span class="badge 
+                        {% if visa_req.status == 'Pending' %}bg-warning text-dark
+                        {% elif visa_req.status == 'In Review' %}bg-info
+                        {% elif visa_req.status == 'Processed' or visa_req.status == 'Completed' %}bg-success
+                        {% elif visa_req.status == 'Action Required' %}bg-danger
+                        {% elif visa_req.status == 'Rejected' %}bg-secondary
+                        {% else %}bg-light text-dark{% endif %}">{{ visa_req.status }}
+                    </span>
+                </div>
             </div>
             <div class="card-body">
                 <dl class="row">
                     <dt class="col-sm-4">Request ID:</dt>
-                    <dd class="col-sm-8">{{ visa_request.id }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.id }}</dd>
 
                     <dt class="col-sm-4">Full Name:</dt>
-                    <dd class="col-sm-8">{{ visa_request.full_name }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.full_name }}</dd>
 
                     <dt class="col-sm-4">Email Address:</dt>
-                    <dd class="col-sm-8">{{ visa_request.email }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.email }}</dd>
 
                     <dt class="col-sm-4">Phone Number:</dt>
-                    <dd class="col-sm-8">{{ visa_request.phone }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.phone }}</dd>
 
                     <dt class="col-sm-4">Destination Country:</dt>
-                    <dd class="col-sm-8">{{ visa_request.destination_country }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.destination_country }}</dd>
 
                     <dt class="col-sm-4">Visa Type:</dt>
-                    <dd class="col-sm-8">{{ visa_request.visa_type }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.visa_type }}</dd>
                     
                     <dt class="col-sm-4">Preferred Appointment Date:</dt>
-                    <dd class="col-sm-8">{{ visa_request.preferred_appointment_date.strftime('%Y-%m-%d') if visa_request.preferred_appointment_date else 'Not specified' }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.preferred_appointment_date.strftime('%Y-%m-%d') if visa_req.preferred_appointment_date else 'Not specified' }}</dd>
                     
                     <dt class="col-sm-4">Submission Date:</dt>
-                    <dd class="col-sm-8">{{ visa_request.submission_date.strftime('%Y-%m-%d %H:%M') if visa_request.submission_date else 'N/A' }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.submission_date.strftime('%Y-%m-%d %H:%M') if visa_req.submission_date else 'N/A' }}</dd>
                     
                     <dt class="col-sm-4">Message:</dt>
-                    <dd class="col-sm-8">{{ visa_request.message|nl2br if visa_request.message else 'N/A' }}</dd>
+                    <dd class="col-sm-8">{{ visa_req.message|nl2br if visa_req.message else 'N/A' }}</dd>
                 </dl>
             </div>
         </div>
@@ -50,42 +61,49 @@
                 <h6 class="m-0 font-weight-bold text-primary">Update Status & Notes</h6>
             </div>
             <div class="card-body">
-                <form method="POST">
+                <form method="POST" action="{{ url_for('admin.visa_request_details', request_id=visa_req.id) }}">
                     {{ form.hidden_tag() }} <!-- CSRF token -->
                     
-                    {{ render_field(form.status, class="form-select") }}
-                    {{ render_field(form.admin_notes, class="form-control", rows=5, placeholder="Add internal notes here...") }}
+                    {{ render_field(form.status, attrs={'class': 'form-select'}) }}
+                    {{ render_field(form.admin_notes, attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Add internal notes here...'}) }}
 
                     <div class="mt-3">
-                        {{ form.submit(class="btn btn-primary") }}
-                        <a href="{{ url_for('admin.visa_requests_list') }}" class="btn btn-secondary">Back to List</a>
+                        <button type="submit" class="btn btn-primary w-100 mb-2">Update Status</button>
+                        <a href="{{ url_for('admin.visa_requests_list') }}" class="btn btn-secondary w-100 mb-2">
+                             <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        <a href="{{ url_for('main.visa_processing_request') }}" class="btn btn-info w-100" target="_blank">
+                            <i class="fas fa-eye"></i> View Public Page
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
-         <div class="card shadow mb-4 mt-3">
+
+        <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Current Status</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Quick Service Navigation</h6>
             </div>
-            <div class="card-body">
-                <p class="mb-0"><strong>Status:</strong> 
-                    <span class="badge 
-                        {% if visa_request.status == 'Pending' %}bg-warning text-dark
-                        {% elif visa_request.status == 'In Review' %}bg-info
-                        {% elif visa_request.status == 'Processed' or visa_request.status == 'Completed' %}bg-success
-                        {% elif visa_request.status == 'Action Required' %}bg-danger
-                        {% elif visa_request.status == 'Rejected' %}bg-secondary
-                        {% else %}bg-light text-dark{% endif %}">{{ visa_request.status }}</span>
-                </p>
-                {% if visa_request.admin_notes %}
-                <hr>
-                <p class="mb-0"><strong>Current Admin Notes:</strong></p>
-                <div style="white-space: pre-wrap; background-color: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
-                    {{ visa_request.admin_notes }}
-                </div>
-                {% endif %}
+            <div class="card-body text-center">
+                <a href="{{ url_for('admin.flight_bookings_list') }}" class="btn btn-sm btn-outline-primary mb-1">Flight Bookings</a>
+                <a href="{{ url_for('admin.proof_of_funds_requests_list') }}" class="btn btn-sm btn-outline-info mb-1">Proof of Funds</a>
+                <a href="{{ url_for('admin.holiday_package_requests_list') }}" class="btn btn-sm btn-outline-success mb-1">Holiday Packages</a>
+                <a href="{{ url_for('admin.hotel_accommodation_requests_list') }}" class="btn btn-sm btn-outline-warning mb-1">Hotel Bookings</a>
             </div>
         </div>
+        
+        {% if visa_req.admin_notes %}
+         <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Current Admin Notes</h6>
+            </div>
+            <div class="card-body">
+                <div style="white-space: pre-wrap; background-color: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                    {{ visa_req.admin_notes }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %} 

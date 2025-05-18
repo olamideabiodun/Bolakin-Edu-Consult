@@ -46,17 +46,17 @@
     <form method="POST" action="{{ url_for('main.proof_of_funds_request') }}" novalidate>
         {{ form.hidden_tag() }} <!-- CSRF token -->
 
-        {{ render_field(form.full_name, class="form-control", placeholder="Enter your full name") }}
-        {{ render_field(form.email, class="form-control", placeholder="your.email@example.com") }}
-        {{ render_field(form.phone, class="form-control", placeholder="+1234567890") }}
+        {{ render_field(form.full_name, attrs={'class': "form-control", 'placeholder': "Enter your full name"}) }}
+        {{ render_field(form.email, attrs={'class': "form-control", 'placeholder': "your.email@example.com"}) }}
+        {{ render_field(form.phone, attrs={'class': "form-control", 'placeholder': "+1234567890"}) }}
         
-        {{ render_field(form.service_type, class="form-select") }}
-        {{ render_field(form.purpose, class="form-select") }}
-        {{ render_field(form.destination_country, class="form-control", placeholder="e.g., Canada, UK, USA (if applicable)") }}
-        {{ render_field(form.amount_required, class="form-control", placeholder="e.g., 25,000 CAD or 15,000,000 NGN") }}
-        {{ render_field(form.timeline, class="form-select") }}
+        {{ render_field(form.service_type, attrs={'class': "form-select"}) }}
+        {{ render_field(form.purpose, attrs={'class': "form-select"}) }}
+        {{ render_field(form.destination_country, attrs={'class': "form-control", 'placeholder': "e.g., Canada, UK, USA (if applicable)"}) }}
+        {{ render_field(form.amount_required, attrs={'class': "form-control", 'placeholder': "e.g., 25,000 CAD or 15,000,000 NGN"}) }}
+        {{ render_field(form.timeline, attrs={'class': "form-select"}) }}
         
-        {{ render_field(form.message, class="form-control", rows=5, placeholder="Provide any additional details or specific requirements for your proof of funds...") }}
+        {{ render_field(form.message, attrs={'class': "form-control", 'rows': 5, 'placeholder': "Provide any additional details or specific requirements for your proof of funds..."}) }}
 
         <div class="text-center mt-4">
             {{ form.submit(class="btn btn-primary btn-lg") }}
